@@ -1,0 +1,26 @@
+
+Examples('regexp group variables',
+  Example('mixed with variables',
+    Given(Unindent(`
+      $rx_result = 'hello' =~ /^[a-z](.*)o$/
+      [$rx_result, $1]
+    `)),
+    Evaluates_to([true, 'ell'])),
+
+  Example('save/restore regexp value',
+    Given(Unindent(`
+      'abc' =~ /^([a-z])(.*)/
+      $f = $1
+      'cdf' =~ /^([a-z])(.*)/
+      [$f, $2]
+    `)),
+    Evaluates_to(['a', 'df'])),
+
+  Example('new regexp overwrite previous group',
+    Given(Unindent(`
+      'abc' =~ /^([a-z])(.*)/
+      'cdf' =~ /^(.*)/
+      $2
+    `)),
+    Evaluates_with(Error(EVAL_UNKNOWN_VARIABLE))),
+)

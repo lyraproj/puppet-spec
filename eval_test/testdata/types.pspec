@@ -1,0 +1,57 @@
+Examples('assignability',
+  Examples('data',
+    Example('deeply nested',
+      Given(`Array[Hash[String,Array[Hash[String,String]]]] < Data`),
+      Evaluates_to(true)),
+
+    Example('recursion_hit_on_both',
+      Given(`Data < RichData`),
+      Evaluates_to(true)),
+  ),
+)
+
+Examples('instance',
+  Examples('pattern',
+    Example('string',
+      Given(`"%(a" =~ Pattern[/\A%([\s\[+#0{<(|-]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])\z/]`),
+      Evaluates_to(true)),
+  ),
+  Examples('struct',
+    Example('hash',
+      Given(Unindent(`
+        type Format = Pattern[/\A%([\s\[+#0{<(|-]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])\z/]
+        type ContainerFormat = Struct[{
+           Optional[format]         => Format,
+           Optional[separator]      => String,
+           Optional[separator2]     => String,
+           Optional[string_formats] => Hash[Type, Format]
+         }]
+         $x = { format => "%(a", separator => "" }
+         $x =~ ContainerFormat`)),
+      Evaluates_to(true)),
+    Example('hash',
+      Given(Unindent(`
+        type Format = Pattern[/\A%([\s\[+#0{<(|-]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])\z/]
+        type ContainerFormat = Struct[{
+           Optional[format]         => Format,
+           Optional[separator]      => String,
+           Optional[separator2]     => String,
+           Optional[string_formats] => Hash[Type, Format]
+         }]
+         $x = { format => "%a", separator => "", string_formats => { Integer => "%#x" }}
+         $x =~ ContainerFormat`)),
+      Evaluates_to(true)),
+  ),
+)
+
+Examples('string',
+  Examples('data',
+    Example('name of type',
+      Given(`String(Data)`),
+      Evaluates_to('Data')),
+
+    Example('recursion_hit_on_both',
+      Given(`Data < RichData`),
+      Evaluates_to(true)),
+  ),
+)

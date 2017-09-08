@@ -1,0 +1,193 @@
+Examples('+',
+  Examples('array',
+    Example('array',
+      Given(`[1,2,3] + [4,5,6]`),
+      Evaluates_to([1,2,3,4,5,6])),
+
+    Example('hash',
+      Given(`[1,2,3] + {a => 10, b => undef}`),
+      Evaluates_to([1,2,3, [a, 10], [b, undef]])),
+
+    Example('other element',
+      Given(`[1,2,3] + 4`),
+      Evaluates_to([1,2,3,4])),
+ ),
+
+  Examples('hash',
+    Example('hash with same key',
+      Given(`{a => 10, b => 20} + {b => 30}`),
+      Evaluates_to({a => 10, b => 30})),
+
+    Example('hash with different key',
+      Given(`{a => 10, b => 20} + {c => 30}`),
+      Evaluates_to({a => 10, b => 20, c => 30})),
+
+    Example('array with even number of elements',
+      Given(`{a => 10, b => 20} + [b, 30, c, 40]`),
+      Evaluates_to({a => 10, b => 30, c => 40})),
+
+    Example('array with uneven number of elements',
+      Given(`{a => 10, b => 20} + [b, 30, c]`),
+      Evaluates_with(Error(EVAL_ARGUMENTS_ERROR))),
+
+    Example('array with array pairs',
+      Given(`{a => 10, b => 20} + [[b, 30], [c, 40]]`),
+      Evaluates_to({a => 10, b => 30, c => 40})),
+
+    Example('array with array that is not pair',
+      Given(`{a => 10, b => 20} + [[b, 30, 34]]`),
+      Evaluates_with(Error(EVAL_ARGUMENTS_ERROR))),
+
+    Example('other element',
+      Given(`{a => 10, b => 20} + 4`),
+      Evaluates_with(Error(EVAL_OPERATOR_NOT_APPLICABLE_WHEN))),
+ ),
+
+  Examples('integer',
+    Example('integer',
+      Given(`23 + 19`),
+      Evaluates_to(42)),
+
+    Example('float',
+      Given(`23 + 19.0`),
+      Evaluates_to(42.0)),
+
+    Example('string with integer',
+      Given(`23 + '19'`),
+      Evaluates_to(42)),
+
+    Example('string with float',
+      Given(`23 + '19.0'`),
+      Evaluates_to(42.0)),
+
+    Example('non numeric string',
+      Given(`23 + 'no'`),
+      Evaluates_with(Error(EVAL_NOT_NUMERIC))),
+
+    Example('other element',
+      Given(`23 + /.*/`),
+      Evaluates_with(Error(EVAL_OPERATOR_NOT_APPLICABLE_WHEN))),
+ ),
+
+  Examples('float',
+    Example('integer',
+      Given(`23.0 + 19`),
+      Evaluates_to(42.0)),
+
+    Example('float',
+      Given(`23.0 + 19.0`),
+      Evaluates_to(42.0)),
+
+    Example('string with integer',
+      Given(`23.0 + '19'`),
+      Evaluates_to(42.0)),
+
+    Example('string with float',
+      Given(`23.0 + '19.0'`),
+      Evaluates_to(42.0)),
+
+    Example('string with hex integer',
+      Given(`'23.0' + '0x13'`),
+      Evaluates_to(42.0)),
+
+    Example('non numeric string',
+      Given(`23 + 'no'`),
+      Evaluates_with(Error(EVAL_NOT_NUMERIC))),
+
+    Example('other element',
+      Given(`23 + /.*/`),
+      Evaluates_with(Error(EVAL_OPERATOR_NOT_APPLICABLE_WHEN))),
+ ),
+
+  Examples('string with integer',
+    Example('integer',
+      Given(`'23' + 19`),
+      Evaluates_to(42)),
+
+    Example('float',
+      Given(`'23' + 19.0`),
+      Evaluates_to(42.0)),
+
+    Example('string with integer',
+      Given(`'23' + '19'`),
+      Evaluates_to(42)),
+
+    Example('string with octal integer',
+      Given(`'23' + '023'`),
+      Evaluates_to(42)),
+
+    Example('string with hex integer',
+      Given(`'23' + '0x13'`),
+      Evaluates_to(42)),
+
+    Example('non numeric string',
+      Given(`'23' + 'no'`),
+      Evaluates_with(Error(EVAL_NOT_NUMERIC))),
+
+    Example('other element',
+      Given(`'23' + /.*/`),
+      Evaluates_with(Error(EVAL_OPERATOR_NOT_APPLICABLE_WHEN))),
+ ),
+
+  Examples('string with float',
+    Example('integer',
+      Given(`'23.0' + 19`),
+      Evaluates_to(42.0)),
+
+    Example('float',
+      Given(`'23.0' + 19.0`),
+      Evaluates_to(42.0)),
+
+    Example('string with integer',
+      Given(`'23.0' + '19'`),
+      Evaluates_to(42.0)),
+
+    Example('string with octal integer',
+      Given(`'23.0' + '023'`),
+      Evaluates_to(42.0)),
+
+    Example('string with hex integer',
+      Given(`'23.0' + '0x13'`),
+      Evaluates_to(42.0)),
+
+    Example('non numeric string',
+      Given(`'23.0' + 'no'`),
+      Evaluates_with(Error(EVAL_NOT_NUMERIC))),
+
+    Example('other element',
+      Given(`'23.0' + /.*/`),
+      Evaluates_with(Error(EVAL_OPERATOR_NOT_APPLICABLE_WHEN))),
+ ),
+)
+
+Examples('-',
+  Examples('array',
+    Example('array',
+      Given(`[1,2,3,4,5,6] - [4,5,6]`),
+      Evaluates_to([1,2,3])),
+
+    Example('hash',
+      Given(`[[1,2],[b,20]] - {a => 1, b => 20}`),
+      Evaluates_to([[1,2]])),
+
+    Example('other element',
+      Given(`[1,2,3] - 3`),
+      Evaluates_to([1,2])),
+ ),
+
+  Examples('hash',
+    Example('hash',
+      Given(`{a => 10, b => 20} - {b => 30}`),
+      Evaluates_to({a => 10})),
+
+    Example('array',
+      Given(`{a => 10, b => 20} - [a,c]`),
+      Evaluates_to({b => 20})),
+
+    Example('other element',
+      Given(`{a => 10, b => 20} - a`),
+      Evaluates_to({b => 20})),
+ ),
+)
+
+
