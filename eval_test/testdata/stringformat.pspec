@@ -576,6 +576,52 @@ Examples('Type',
     }
   ),
 
+  Examples('Enum',
+    [
+      `Enum`,
+      `Enum['a']`,
+      `Enum['a', 'b']`,
+      `Enum['A', 'B']`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Float',
+    {
+      `%s` => `Float`,
+      `%p` => `Float`,
+      `%#s` => `'Float'`,
+      `%#p` => `Float`
+    }.map |$fmt, $result| {
+      Example("$fmt produces $result",
+        Given("String(Float, Type => '$fmt')"), Evaluates_to($result))
+    },
+
+    [
+      `Float`,
+      `Float[1.00000]`,
+      `Float[default, 2.00000]`,
+      `Float[1.00000, 2.00000]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Hash',
+    [
+      `Hash`,
+      `Hash[0, 0]`,
+      `Hash[String, Integer]`,
+      `Hash[String, Integer, 4, 9]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
   Examples('Integer',
     {
       `%s` => `Integer`,
@@ -596,6 +642,81 @@ Examples('Type',
     Example('Integer[default,2]', Given(`String(Integer[default,2])`), Evaluates_to(`Integer[default, 2]`)),
   ),
 
+  Examples('Iterable',
+    [
+      `Iterable`,
+      `Iterable[Integer]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Iterator',
+    [
+      `Iterator`,
+      `Iterator[Integer]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('NotUndef',
+    [
+      `NotUndef`,
+      `NotUndef[Data]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Optional',
+    [
+      `Optional`,
+      `Optional[Integer]`,
+      `Optional[String[1]]`,
+      `Optional['string value']`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Pattern',
+    [
+      `Pattern`,
+      `Pattern[/a.*/]`,
+      `Pattern[/a.*/, /b.*/]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Runtime',
+    [
+      `Runtime`,
+      `Runtime['go']`,
+      `Runtime['java', 'java.lang.String']`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
+
+  Examples('Struct',
+    [
+      `Struct`,
+      `Struct[{'a' => String}]`,
+      `Struct[{Optional['a'] => String}]`,
+      `Struct[{'a' => Optional[String]}]`,
+    ].map |$str| {
+      Example($str,
+        Given("String($str)"), Evaluates_to($str))
+    }
+  ),
 
   Examples('Tuple',
     [

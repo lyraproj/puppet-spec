@@ -1,5 +1,3 @@
-package testdata
-
 Examples('Binary',
   Examples('string and format',
     Example('%r',

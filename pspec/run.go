@@ -7,8 +7,7 @@ import (
 	"testing"
 
 	. "github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/eval/evaluator"
-	. "github.com/puppetlabs/go-evaluator/eval/values/api"
+	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-parser/parser"
 )
 

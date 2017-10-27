@@ -41,3 +41,7 @@ func TestSemver(t *testing.T) {
 func TestStringFormat(t *testing.T) {
 	RunPspecTests(t, `stringformat.pspec`)
 }
+
+func TestFlowControl(t *testing.T) {
+	RunPspecTests(t, `flowcontrol.pspec`)
+}

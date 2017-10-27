@@ -1,0 +1,6 @@
+Example('if without else', Given(Unindent(`
+  if true {
+    notice('true')
+  }
+  notice('done')
+`)), Evaluates_with(Notice('true', 'done')))
