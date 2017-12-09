@@ -22,7 +22,7 @@ func parseNext(lexer Lexer) PN {
 	case TOKEN_STRING, TOKEN_BOOLEAN, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_UNDEF:
 		return parseLiteral(lexer)
 	case TOKEN_IDENTIFIER:
-		switch lexer.TokenValue().(string) {
+		switch lexer.TokenValue() {
 		case `null`:
 			return LiteralPN(nil)
 		default:

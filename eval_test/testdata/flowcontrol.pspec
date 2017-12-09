@@ -1,6 +1,74 @@
-Example('if without else', Given(Unindent(`
-  if true {
-    notice('true')
-  }
-  notice('done')
-`)), Evaluates_with(Notice('true', 'done')))
+Examples('if',
+  Examples('true',
+    Example('without else', Given(Unindent(`
+      if true {
+        notice('if')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('if', 'done'))),
+
+    Example('with else', Given(Unindent(`
+      if true {
+        notice('if')
+      } else {
+        notice('else')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('if', 'done'))),
+  ),
+
+  Examples('truthy',
+    Example('without else', Given(Unindent(`
+      if 1 {
+        notice('if')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('if', 'done'))),
+
+    Example('with else', Given(Unindent(`
+      if 1 {
+        notice('if')
+      } else {
+        notice('else')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('if', 'done'))),
+  ),
+
+  Examples('false',
+    Example('without else', Given(Unindent(`
+      if false {
+        notice('if')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('done'))),
+
+    Example('with else', Given(Unindent(`
+      if false {
+        notice('if')
+      } else {
+        notice('else')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('else', 'done'))),
+  ),
+
+  Examples('falsey',
+    Example('without else', Given(Unindent(`
+      if undef {
+        notice('if')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('done'))),
+
+    Example('with else', Given(Unindent(`
+      if undef {
+        notice('if')
+      } else {
+        notice('else')
+      }
+      notice('done')
+    `)), Evaluates_with(Notice('else', 'done'))),
+  ),
+)
+Example('? precedence', Given(`1 + 2 ? { 3 => expected, default => bad }`), Evaluates_to('expected'))

@@ -1,18 +1,12 @@
 package pspec
 
 import (
-	"bytes"
-	. "fmt"
-
 	"reflect"
-
-	"strings"
 
 	. "github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-evaluator/pcore"
 	. "github.com/puppetlabs/go-evaluator/types"
-	"github.com/puppetlabs/go-evaluator/utils"
 	. "github.com/puppetlabs/go-parser/issue"
 	. "github.com/puppetlabs/go-parser/parser"
 	. "github.com/puppetlabs/go-parser/validator"
@@ -59,6 +53,10 @@ type (
 		setExample(example *Example)
 	}
 
+	ResultEntry interface {
+		Match() PValue
+	}
+
 	Test interface {
 		Name() string
 	}
@@ -90,11 +88,6 @@ type (
 		expected PValue
 	}
 
-	EvaluatesWith struct {
-		example        *Example
-		expectedIssues []*IssueResult
-	}
-
 	Source struct {
 		sources []string
 	}
@@ -111,17 +104,6 @@ type (
 	TestGroup struct {
 		name  string
 		tests []Test
-	}
-
-	IssueResult struct {
-		issue    *Issue
-		severity Severity
-		match    PValue
-	}
-
-	ValidatesWith struct {
-		example        *Example
-		expectedIssues []*IssueResult
 	}
 )
 
@@ -156,46 +138,6 @@ func splatNodes(args []PValue) []Node {
 }
 
 func init() {
-	NewGoConstructor(`Error`,
-		func(d Dispatch) {
-			d.Param(`Runtime[go, '*issue.Issue']`)
-			d.OptionalParam(`String`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				match := UNDEF
-				if len(args) > 1 {
-					match = args[1]
-				}
-				return WrapRuntime(&IssueResult{args[0].(*RuntimeValue).Interface().(*Issue), SEVERITY_ERROR, match})
-			})
-		},
-
-		func(d Dispatch) {
-			d.Param(`String`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&IssueResult{nil, SEVERITY_ERROR, args[0]})
-			})
-		})
-
-	NewGoConstructor(`Warning`,
-		func(d Dispatch) {
-			d.Param(`Runtime[go, '*issue.Issue']`)
-			d.OptionalParam(`String`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				match := UNDEF
-				if len(args) > 1 {
-					match = args[1]
-				}
-				return WrapRuntime(&IssueResult{args[0].(*RuntimeValue).Interface().(*Issue), SEVERITY_WARNING, match})
-			})
-		},
-
-		func(d Dispatch) {
-			d.Param(`String`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&IssueResult{nil, SEVERITY_WARNING, args[0]})
-			})
-		})
-
 	NewGoConstructor(`Example`,
 		func(d Dispatch) {
 			d.Param(`String`)
@@ -238,19 +180,6 @@ func init() {
 			d.Param(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				return WrapRuntime(&EvaluationResult{nil, args[0]})
-			})
-		})
-
-	NewGoConstructor(`Evaluates_with`,
-		func(d Dispatch) {
-			d.Param(`Runtime[go, '*pspec.IssueResult']`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				argc := len(args)
-				results := make([]*IssueResult, argc)
-				for idx := 0; idx < argc; idx++ {
-					results[idx] = args[idx].(*RuntimeValue).Interface().(*IssueResult)
-				}
-				return WrapRuntime(&EvaluatesWith{nil, results})
 			})
 		})
 
@@ -306,19 +235,6 @@ func init() {
 			d.Param(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				return WrapString(Unindent(args[0].String()))
-			})
-		})
-
-	NewGoConstructor(`Validates_with`,
-		func(d Dispatch) {
-			d.Param(`Runtime[go, '*pspec.IssueResult']`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				argc := len(args)
-				results := make([]*IssueResult, argc)
-				for idx := 0; idx < argc; idx++ {
-					results[idx] = args[idx].(*RuntimeValue).Interface().(*IssueResult)
-				}
-				return WrapRuntime(&ValidatesWith{nil, results})
 			})
 		})
 }
@@ -422,22 +338,6 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 	}
 }
 
-func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
-	source := actual.(string)
-	return func(assertions Assertions) {
-		actual, issues := parseAndValidate(source, false)
-		if !hasError(issues) {
-			_, evalIssues := evaluate(e.example.Evaluator(), actual, e.example.Scope())
-			issues = append(issues, evalIssues...)
-		}
-		reportIssueMismatch(assertions, e.expectedIssues, issues)
-	}
-}
-
-func (e *EvaluatesWith) setExample(example *Example) {
-	e.example = example
-}
-
 func (e *EvaluationResult) setExample(example *Example) {
 	e.example = example
 }
@@ -531,14 +431,6 @@ func (v *TestGroup) Tests() []Test {
 	return v.tests
 }
 
-func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
-	source := actual.(string)
-	return func(assertions Assertions) {
-		_, issues := parseAndValidate(source, true)
-		reportIssueMismatch(assertions, v.expectedIssues, issues)
-	}
-}
-
 func parseAndValidate(source string, singleExpression bool) (Expression, []*ReportedIssue) {
 	expr, err := CreateParser().Parse(``, source, false, singleExpression)
 	var issues []*ReportedIssue
@@ -564,66 +456,4 @@ func evaluate(evaluator Evaluator, expr Expression, scope Scope) (PValue, []*Rep
 		issues = []*ReportedIssue{issue}
 	}
 	return result, issues
-}
-
-func reportIssueMismatch(assertions Assertions, expected []*IssueResult, actual []*ReportedIssue) {
-	bld := bytes.NewBufferString(``)
-nextExpected:
-	for _, expected := range expected {
-		for _, issue := range actual {
-			if matchIssue(expected, issue) {
-				continue nextExpected
-			}
-		}
-		eb := bytes.NewBufferString(``)
-		if expected.issue != nil {
-			eb.WriteString(string(expected.issue.Code()))
-			if expected.match != nil {
-				eb.WriteString(`, `)
-			}
-		}
-		switch expected.match.(type) {
-		case *StringValue:
-			utils.PuppetQuote(eb, expected.match.String())
-		case *RegexpValue:
-			utils.RegexpQuote(eb, expected.match.(*RegexpValue).PatternString())
-		}
-		Fprintf(bld, "Expected %s %s but it was not produced\n", expected.severity.String(), eb.String())
-	}
-
-nextIssue:
-	for _, issue := range actual {
-		for _, expected := range expected {
-			if matchIssue(expected, issue) {
-				continue nextIssue
-			}
-			Fprintf(bld, "Unexpected %s: %s\n", issue.Code(), issue.String())
-		}
-	}
-	if bld.Len() > 0 {
-		assertions.Fail(bld.String())
-	}
-}
-
-func matchIssue(expected *IssueResult, issue *ReportedIssue) bool {
-	if expected.issue == nil || expected.issue.Code() == issue.Code() {
-		match := expected.match
-		switch match.(type) {
-		case *UndefValue:
-			return true
-		case *StringValue:
-			if strings.Contains(issue.String(), match.String()) {
-				return true
-			}
-		case *RegexpValue:
-			if match.(*RegexpValue).Regexp().MatchString(issue.String()) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (v *ValidatesWith) setExample(example *Example) {
-	v.example = example
 }
