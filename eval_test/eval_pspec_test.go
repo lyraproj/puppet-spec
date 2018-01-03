@@ -18,6 +18,10 @@ func TestComparison(t *testing.T) {
 	RunPspecTests(t, `comparison.pspec`)
 }
 
+func TestLogical(t *testing.T) {
+	RunPspecTests(t, `logical.pspec`)
+}
+
 func TestVariables(t *testing.T) {
 	RunPspecTests(t, `variables.pspec`)
 }
