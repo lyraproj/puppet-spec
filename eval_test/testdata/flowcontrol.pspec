@@ -100,8 +100,8 @@ Examples('case',
   Example(`case 2 { 1,3 : {'wat'} 5: { 'wat'} } == undef`,
     Given(`case 2 { 1,3 : {'wat'} 5: { 'wat'} }`), Evaluates_to(undef)),
 
-  Example(`case 'banana' { 1,3 : {'wat'} /.*ana.*/: { 'w00t'} } == 'w00t'`,
-    Given(`case 'banana' { 1,3 : {'wat'} /.*ana.*/: { 'w00t'} }`), Evaluates_to('w00t')),
+  Example(`case 'banana' { 1,3 : {'wat'} /.*(ana).*/: { $1 } } == 'ana'`,
+    Given(`case 'banana' { 1,3 : {'wat'} /.*(ana).*/: { $1 } }`), Evaluates_to('ana')),
 )
 
 Examples('?',
