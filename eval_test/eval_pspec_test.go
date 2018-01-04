@@ -49,3 +49,7 @@ func TestStringFormat(t *testing.T) {
 func TestFlowControl(t *testing.T) {
 	RunPspecTests(t, `flowcontrol.pspec`)
 }
+
+func TestBreak(t *testing.T) {
+	RunPspecTests(t, `break.pspec`)
+}

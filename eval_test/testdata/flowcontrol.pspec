@@ -121,5 +121,5 @@ Examples('?',
     Given(`'banana' ? {1 => 'wat', /.*(ana).*/ => $1}`), Evaluates_to('ana')),
 
   Example('precedence',
-    Given(`1 + 2 == 3 and 2 + 2 == 5 ? { false => 'w00t', default => 'wat' }`), Evaluates_to('w00t')),
+    Given(`1 + 2 == 4 and 2 + 2 == 4 ? { false => 'w00t', default => 'wat' }`), Evaluates_to('w00t')),
 )
