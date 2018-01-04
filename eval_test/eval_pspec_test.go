@@ -53,3 +53,11 @@ func TestFlowControl(t *testing.T) {
 func TestBreak(t *testing.T) {
 	RunPspecTests(t, `break.pspec`)
 }
+
+func TestNext(t *testing.T) {
+	RunPspecTests(t, `next.pspec`)
+}
+
+func TestReturn(t *testing.T) {
+	RunPspecTests(t, `return.pspec`)
+}
