@@ -61,3 +61,11 @@ func TestNext(t *testing.T) {
 func TestReturn(t *testing.T) {
 	RunPspecTests(t, `return.pspec`)
 }
+
+func TestIterative(t *testing.T) {
+	RunPspecTests(t, `iterative.pspec`)
+}
+
+func TestAll(t *testing.T) {
+	RunPspecTests(t, `all.pspec`)
+}

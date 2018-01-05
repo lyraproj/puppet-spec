@@ -1,0 +1,39 @@
+['all', 'any', 'each', 'filter', 'each', 'map'].map |$func| {
+  Scope(func => $func).with |$scope| {
+    Examples("The ${func} function",
+      Example('passes a hash entry as an array of the key and value',
+        Given($scope, `$func.call({a=>1}) |$v| { notice($v[0], $v[1]) }`),
+        Evaluates_with(Notice('a', '1'))),
+
+      Examples('raises an error when',
+        Example('used against an unsupported type',
+          Given($scope, `$func.call(3.14)  |$k, $v| {  }`),
+          Evaluates_with(Error(/no matching parameter signature/))),
+
+        Example('called with any parameters besides a block',
+          Given($scope, `$func.call([1], 1, 2)  |$k, $v| {  }`),
+          Evaluates_with(Error(/no matching parameter signature/))),
+
+        Example('called without a block',
+          Given($scope, `$func.call([1])`),
+          Evaluates_with(Error(/no matching parameter signature/))),
+
+        Example('called with something that is not a block',
+          Given($scope, `$func.call([1], 1, 2)`),
+          Evaluates_with(Error(/no matching parameter signature/))),
+
+        Example('called with a block with too many required parameters',
+          Given($scope, `$func.call([1]) |$v1, $v2, $v3| {  }`),
+          Evaluates_with(Error(/no matching parameter signature/))),
+
+        Example('raises an error when called with a block with too few parameters',
+          Given($scope, `$func.call([1]) || {  }`),
+          Evaluates_with(Error(/no matching parameter signature/))),
+      ),
+
+      Example('does not raise an error when called with a block with too many but optional arguments',
+        Given($scope, `$func.call([1]) |$v1, $v2, $v3=extra| {  }`),
+        Evaluates_ok()),
+    )
+  }
+}

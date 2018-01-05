@@ -390,6 +390,13 @@ func init() {
 			})
 		})
 
+	NewGoConstructor(`Evaluates_ok`,
+		func(d Dispatch) {
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{}})
+			})
+		})
+
 	NewGoConstructor(`Validates_with`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
@@ -400,6 +407,13 @@ func init() {
 					results[idx] = args[idx].(*RuntimeValue).Interface().(*Expectation)
 				}
 				return WrapRuntime(&ValidatesWith{nil, results})
+			})
+		})
+
+	NewGoConstructor(`Validates_ok`,
+		func(d Dispatch) {
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&ValidatesWith{nil, []*Expectation{}})
 			})
 		})
 }
