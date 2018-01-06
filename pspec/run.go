@@ -14,7 +14,8 @@ import (
 var baseLoader DefiningLoader
 var baseLoaderLock sync.Mutex
 
-func RunPspecTests(t *testing.T, name string) {
+func RunPspecTests(t *testing.T, pattern string) {
+	t.Helper()
 	baseLoaderLock.Lock()
 	if baseLoader == nil {
 		baseLoader = NewParentedLoader(pcore.Loader())
@@ -24,11 +25,20 @@ func RunPspecTests(t *testing.T, name string) {
 	loader := NewParentedLoader(baseLoader)
 	ResolveGoFunctions(loader, NewStdLogger())
 
-	tests := NewSpecEvaluator(loader).CreateTests(parseTestContents(t, name), loader)
+	testFiles, err := filepath.Glob(pattern)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	tests := make([]Test, 0, 100)
+	for _, testFile := range testFiles {
+		tests = append(tests, NewSpecEvaluator(loader).CreateTests(parseTestContents(t, testFile), loader)...)
+	}
 	runTests(t, tests)
 }
 
 func runTests(t *testing.T, tests []Test) {
+	t.Helper()
 	for _, test := range tests {
 		if testExec, ok := test.(*TestExecutable); ok {
 			t.Run(testExec.Name(), func(s *testing.T) {
@@ -42,8 +52,7 @@ func runTests(t *testing.T, tests []Test) {
 	}
 }
 
-func parseTestContents(t *testing.T, name string) Expression {
-	path := filepath.Join(`testdata`, name)
+func parseTestContents(t *testing.T, path string) Expression {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

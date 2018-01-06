@@ -15,10 +15,6 @@ Examples('the all method',
     Example('all on a hash selecting key and value',
       Given(`{0=>0,1=>2,2=>4}.all |$k,$v| { $v == $k*2 }`),
       Evaluates_to(true)),
-
-    Example('all on an array with index',
-      Given(`[0,2,4].all |$i, $v| { $v == $i * 2 }`),
-      Evaluates_to(true)),
   ),
 
   Examples('produces a boolean',
