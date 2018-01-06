@@ -1,0 +1,9 @@
+Examples('the fail function',
+  Example('errors with given argument',
+    Given(`fail('too bad')`),
+    Evaluates_with(Error(EVAL_FAILURE, 'too bad'))),
+
+  Example('errors with given concatenated and stringified arguments',
+    Given(`fail('the hash', {a => [32]}, 'did not have b')`),
+    Evaluates_with(Error(`the hash {'a' => [32]} did not have b`))),
+)
