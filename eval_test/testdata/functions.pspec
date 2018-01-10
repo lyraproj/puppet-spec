@@ -64,8 +64,8 @@ Examples('call function',
         Evaluates_to(3)),
 
       Example('incompatible type and block',
-        Given(`assert_type(String, 23) |$t, $v| { "Hey ${v} is hardly a ${t} now, is it? It's a ${$v.type(generalized)}" }`),
-        Evaluates_to("Hey 23 is hardly a String now, is it? It's a Integer")),
+        Given(`assert_type(String, 23) |$t, $v| { "Hey ${v} is hardly a ${t} now, is it?" }`),
+        Evaluates_to("Hey Integer[23, 23] is hardly a String now, is it?")),
 
       Example('incompatible type and incompatible block',
         Given(`assert_type(String, 23) |$t| { 0 }`),
