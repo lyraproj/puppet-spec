@@ -99,8 +99,14 @@ nextStr:
 				continue nextStr
 			}
 		}
+		excluded := false
 		for _, e := range excludes {
-			e.matchLogEntry(b, level, str)
+			if e.matchLogEntry(b, level, str) {
+				excluded = true
+			}
+		}
+		if !excluded {
+			Fprintf(b, "Unexpected %s\n", str)
 		}
 	}
 
@@ -162,12 +168,14 @@ nextMatch:
 	}
 }
 
-func (e *Exclude) matchLogEntry(b *bytes.Buffer, level LogLevel, str string) {
+func (e *Exclude) matchLogEntry(b *bytes.Buffer, level LogLevel, str string) bool {
 	for _, m := range e.matchers {
 		if m.MatchString(str) {
 			Fprintf(b, "%s(%s) matches exclusion %s\n", level, str, m.String())
+			return true
 		}
 	}
+	return false
 }
 
 func (e *Exclude) matchIssue(b *bytes.Buffer, issue *ReportedIssue) bool {
