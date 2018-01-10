@@ -1,4 +1,4 @@
-Examples('break',
+Examples('the break function',
   Examples('breaks iteration as if at end of input',
     Example('in a map for an array',
       Given(`[1,2,3].map |$x| { if $x == 3 { break() } $x }`),

@@ -1,4 +1,4 @@
-Examples('the any method',
+Examples('the any function',
   Examples('should be callable as',
     Example('any on an array',
       Given(`[1,2,3].any |$v| { $v == 2 }`),

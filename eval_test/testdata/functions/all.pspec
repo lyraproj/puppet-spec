@@ -1,4 +1,4 @@
-Examples('the all method',
+Examples('the all function',
   Examples('should be callable as',
     Example('all on an array',
       Given(`[1,2,3].all |$v| { $v > 0 }`),

@@ -1,4 +1,4 @@
-Examples('next',
+Examples('the next function',
   Examples('exits a block yielded to iteratively',
     Example('with a given value as result for this iteration',
       Given(`[1,2,3].map |$x| { if $x == 1 { next(100) } $x*2 }`),

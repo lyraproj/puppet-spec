@@ -1,6 +1,6 @@
 ['all', 'any', 'each', 'filter', 'map'].map |$func| {
   Scope(func => $func).with |$scope| {
-    Examples("The ${func} function",
+    Examples("the ${func} function",
       Example('passes a hash entry as an array of the key and value',
         Given($scope, `$func.call({a=>1}) |$v| { notice($v[0], $v[1]) }`),
         Evaluates_with(Notice('a', '1'))),

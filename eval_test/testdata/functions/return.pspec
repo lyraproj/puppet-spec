@@ -1,4 +1,4 @@
-Examples('return',
+Examples('the return function',
   Examples('returns from outer function when called from nested block',
     Example('with a given value as function result',
       Given(Unindent(`
