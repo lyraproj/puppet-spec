@@ -7,6 +7,5 @@ import (
 )
 
 func TestPSpecs(t *testing.T) {
-	RunPspecTests(t, `testdata/*.pspec`)
-	RunPspecTests(t, `testdata/functions/*.pspec`)
+	RunPspecTests(t, `testdata`)
 }

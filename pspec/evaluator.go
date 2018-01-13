@@ -11,9 +11,10 @@ import (
 	. "github.com/puppetlabs/go-parser/parser"
 	. "github.com/puppetlabs/go-parser/validator"
 	. "github.com/puppetlabs/go-pspec/testutils"
+	"io/ioutil"
+	"path/filepath"
+	"os"
 )
-
-var pcore = NewPcore(NewStdLogger())
 
 type (
 	Assertions interface {
@@ -24,10 +25,20 @@ type (
 
 	Executable func(assertions Assertions)
 
+	Housekeeping func()
+
 	SpecEvaluator interface {
 		Evaluator
 
 		CreateTests(expression Expression, loader Loader) []Test
+	}
+
+	SetUp interface {
+		SetUpFunc() Housekeeping
+	}
+
+	TearDown interface {
+		TearDownFunc() Housekeeping
 	}
 
 	specEval struct {
@@ -61,6 +72,10 @@ type (
 		Name() string
 	}
 
+	ValueConnector interface {
+		ConnectValue(value PValue)
+	}
+
 	Example struct {
 		description string
 		given       *Given
@@ -92,6 +107,20 @@ type (
 		sources []string
 	}
 
+	AsSetting struct {
+		key string
+	}
+
+	SettingsInput struct {
+		settings *HashValue
+	}
+
+	FixtureInput struct {
+		connector ValueConnector
+		content *HashValue
+		tmpDir string
+	}
+
 	ScopeInput struct {
 		scope Scope
 	}
@@ -99,6 +128,8 @@ type (
 	TestExecutable struct {
 		name string
 		test Executable
+		setup []Housekeeping
+		tearDown []Housekeeping
 	}
 
 	TestGroup struct {
@@ -206,6 +237,36 @@ func init() {
 			d.Param(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				return WrapRuntime(&ParseResult{nil, args[0].String()})
+			})
+		})
+
+	NewGoConstructor(`Settings`,
+		func(d Dispatch) {
+			d.Param(`Hash[String[1], Data]`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&SettingsInput{args[0].(*HashValue)})
+			})
+		})
+
+	NewGoConstructor(`AsSetting`,
+		func(d Dispatch) {
+			d.Param(`String[1]`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&AsSetting{args[0].String()})
+			})
+		})
+
+	NewGoConstructor2(`Fixture`,
+		func(lt LocalTypes) {
+			lt.Type(`DirSpec`, `Hash[String[1], Variant[String,DirSpec]]`)
+		},
+		func(d Dispatch) {
+			d.Param2(NewRuntimeType3(reflect.TypeOf([]ValueConnector{}).Elem()))
+			d.Param(`DirSpec`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&FixtureInput{
+					connector: args[0].(*RuntimeValue).Interface().(*AsSetting),
+					content: args[1].(*HashValue)})
 			})
 		})
 
@@ -343,8 +404,17 @@ func (e *EvaluationResult) setExample(example *Example) {
 }
 
 func (e *Example) CreateTest() Test {
+	setUp := make([]Housekeeping, 0)
+	tearDown := make([]Housekeeping, 0)
+
 	tests := make([]Executable, 0, 8)
 	for _, input := range e.given.inputs {
+		if is, ok := input.(SetUp); ok {
+      setUp = append(setUp, is.SetUpFunc())
+		}
+		if is, ok := input.(TearDown); ok {
+      tearDown = append(tearDown, is.TearDownFunc())
+		}
 		tests = append(tests, input.CreateTests(e.result)...)
 	}
 	test := func(assertions Assertions) {
@@ -352,7 +422,7 @@ func (e *Example) CreateTest() Test {
 			test(assertions)
 		}
 	}
-	return &TestExecutable{e.description, test}
+	return &TestExecutable{e.description, test, setUp, tearDown}
 }
 
 func (e *Example) Description() string {
@@ -361,7 +431,7 @@ func (e *Example) Description() string {
 
 func (e *Example) Evaluator() Evaluator {
 	if e.evaluator == nil {
-		e.evaluator = NewEvaluator(NewParentedLoader(pcore.Loader()), NewArrayLogger())
+		e.evaluator = NewEvaluator(NewParentedLoader(Puppet.EnvironmentLoader()), NewArrayLogger())
 	}
 	return e.evaluator
 }
@@ -398,6 +468,60 @@ func (p *ParseResult) setExample(example *Example) {
 	p.example = example
 }
 
+func (i *FixtureInput) CreateTests(expected Result) []Executable {
+	// Fixture input does not create any tests
+	return []Executable{}
+}
+
+func (i *FixtureInput) SetUpFunc() Housekeeping {
+	return func() {
+		var err error
+		i.tmpDir, err = ioutil.TempDir(``, `pspec`)
+		if err != nil {
+			panic(err)
+		}
+		makeDirectories(i.tmpDir, i.content)
+		i.connector.ConnectValue(WrapString(i.tmpDir))
+	}
+}
+
+func makeDirectories(parent string, hash *HashValue) {
+	for _, e := range hash.EntriesSlice() {
+		name := e.Key().String()
+		path := filepath.Join(parent, name)
+		value := e.Value()
+		if sub, ok := value.(*HashValue); ok {
+			err := os.Mkdir(path, 0755)
+			if err != nil {
+				panic(err)
+			}
+			makeDirectories(path, sub)
+		} else {
+			ioutil.WriteFile(path, []byte(value.String()), 0644)
+		}
+	}
+}
+
+func (i *FixtureInput) TearDownFunc() Housekeeping {
+	return func() {
+		if i.tmpDir != `` {
+			err := os.RemoveAll(i.tmpDir)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+func (s *AsSetting) ConnectValue(v PValue) {
+	Puppet.Set(s.key, v)
+}
+
+func (i *SettingsInput) CreateTests(expected Result) []Executable {
+	// Settings input does not create any tests
+	return []Executable{}
+}
+
 func (i *ScopeInput) CreateTests(expected Result) []Executable {
 	// Scope input does not create any tests
 	return []Executable{}
@@ -421,6 +545,32 @@ func (v *TestExecutable) Name() string {
 
 func (v *TestExecutable) Executable() Executable {
 	return v.test
+}
+
+func (v *TestExecutable) Run(assertions Assertions) {
+	Puppet.Reset()
+	for _, s := range v.setup {
+		safeHousekeeping(s)
+	}
+	defer func() {
+		for i := len(v.tearDown) - 1; i >= 0; i-- {
+			safeHousekeeping(v.tearDown[i])
+		}
+	}()
+	v.test(assertions)
+}
+
+func safeHousekeeping(h Housekeeping) {
+	defer func() {
+		if err := recover(); err != nil {
+			if e, ok := err.(error); ok {
+				CurrentContext().Logger().Log(ERR, WrapString(e.Error()))
+			} else {
+				panic(err)
+			}
+		}
+	}()
+	h()
 }
 
 func (v *TestGroup) Name() string {

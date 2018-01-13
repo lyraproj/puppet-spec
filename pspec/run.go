@@ -2,30 +2,41 @@ package pspec
 
 import (
 	"io/ioutil"
-	"path/filepath"
 	"sync"
 	"testing"
 
 	. "github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-parser/parser"
+	"github.com/puppetlabs/go-evaluator/pcore"
+	"path/filepath"
+	"os"
+	"strings"
 )
 
 var baseLoader DefiningLoader
 var baseLoaderLock sync.Mutex
 
-func RunPspecTests(t *testing.T, pattern string) {
+func RunPspecTests(t *testing.T, testRoot string) {
 	t.Helper()
 	baseLoaderLock.Lock()
+	logger := NewStdLogger()
 	if baseLoader == nil {
-		baseLoader = NewParentedLoader(pcore.Loader())
-		ResolveGoFunctions(baseLoader, NewStdLogger())
+		baseLoader = NewParentedLoader(pcore.NewPcore(logger).SystemLoader())
+		ResolveGoFunctions(baseLoader, logger)
 	}
 	baseLoaderLock.Unlock()
 	loader := NewParentedLoader(baseLoader)
-	ResolveGoFunctions(loader, NewStdLogger())
 
-	testFiles, err := filepath.Glob(pattern)
+	testFiles := make([]string, 0, 64)
+	err := filepath.Walk(testRoot, func(path string, info os.FileInfo, err error) error {
+		if err == nil {
+			if !info.IsDir() && strings.HasSuffix(path, `.pspec`) {
+				testFiles = append(testFiles, path)
+			}
+		}
+		return err
+	})
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -42,7 +53,7 @@ func runTests(t *testing.T, tests []Test) {
 	for _, test := range tests {
 		if testExec, ok := test.(*TestExecutable); ok {
 			t.Run(testExec.Name(), func(s *testing.T) {
-				testExec.Executable()(&assertions{s})
+				testExec.Run(&assertions{s})
 			})
 		} else if testGroup, ok := test.(*TestGroup); ok {
 			t.Run(testGroup.Name(), func(s *testing.T) {
