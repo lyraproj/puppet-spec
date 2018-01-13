@@ -1,0 +1,21 @@
+Examples('file based loader',
+  Example('loads a function in a module',
+    Given(
+      Fixture(
+        AsSetting('module_path'),
+        'mod' => {
+          'functions' => {
+            'myfunc.pp' => @(END)
+              function mod::myfunc(String $arg) {
+                "$arg from myfunc"
+              }
+              |-END
+            }
+          }),
+      Source(@(SRC)
+        mod::myfunc('hello')
+        |-SRC
+      )
+    ),
+    Evaluates_to('hello from myfunc')),
+)
