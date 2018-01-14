@@ -34,4 +34,8 @@ Examples('the sprintf function',
   Example('named arguments hash with non string keys are tolerated',
     Given(`sprintf('%<foo>d : %<bar>f', {'foo' => 1, 'bar' => 2, 1 => 2, false => true, undef => {}})`),
     Evaluates_to(`1 : 2.000000`)),
+
+  Example('given flags are ignored (output verbatim) when using format with curly braces',
+    Given(`sprintf('%{foo}d : %{bar}f', {'foo' => 1, 'bar' => 2})`),
+    Evaluates_to(`1d : 2f`)),
 )

@@ -300,7 +300,7 @@ func init() {
 		})
 }
 
-func (s *specEval) specError(issueCode IssueCode, semantic Expression, args ...interface{}) *ReportedIssue {
+func (s *specEval) specError(issueCode IssueCode, semantic Expression, args H) *ReportedIssue {
 	return NewReportedIssue(issueCode, SEVERITY_ERROR, args, semantic)
 }
 
