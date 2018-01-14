@@ -6,5 +6,5 @@ import (
 )
 
 func TestPrimitives(t *testing.T) {
-	RunPspecTests(t, `primitives.pspec`)
+	RunPspecTests(t, `testdata`)
 }

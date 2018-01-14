@@ -509,6 +509,7 @@ func (i *FixtureInput) TearDownFunc() Housekeeping {
 			if err != nil {
 				panic(err)
 			}
+			i.tmpDir = ``
 		}
 	}
 }
