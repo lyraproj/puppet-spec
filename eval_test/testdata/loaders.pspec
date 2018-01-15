@@ -1,6 +1,5 @@
 Examples('file based loader',
-  Fixture(
-    AsSetting('module_path'),
+  Given(Settings('module_path' => Directory(
     'mod' => {
       'functions' => {
         'myfunc.pp' => @(END)
@@ -12,22 +11,18 @@ Examples('file based loader',
       'types' => {
         'mytype.pp' => 'type Mod::Mytype = Integer[0, 127]'
         },
-      }).with |$fixture| {[
-    Example('loads a function in a module',
-      Given(
-        $fixture,
-        Source(@(SRC))
-          mod::myfunc('hello')
-          |-SRC
-      ),
-      Evaluates_to('hello from myfunc')),
-    Example('loads a type in a module',
-      Given(
-        $fixture,
-        Source(@(SRC))
-          String(Mod::Mytype)
-          |-SRC
-      ),
-      Evaluates_to('Mod::Mytype')),
-    ]}
+    }
+  ))),
+
+  Example('loads a function in a module',
+    Given(@(SRC)),
+      mod::myfunc('hello')
+      |-SRC
+    Evaluates_to('hello from myfunc')),
+
+  Example('loads a type in a module',
+    Given(@(SRC)),
+      String(Mod::Mytype)
+      |-SRC
+    Evaluates_to('Mod::Mytype')),
 )

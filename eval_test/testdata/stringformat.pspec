@@ -90,49 +90,48 @@ Examples('Array',
 )
 
 Examples('Binary',
-  Scope(sample => Binary('binary', '%r')).with |$scope| {
-    [
-      Example('is converted to strict base64 string unquoted by default (same as %B)',
-        Given($scope, `String($sample)`), Evaluates_to('YmluYXJ5')),
+  Examples('with sample',
+    Given(Scope(sample => Binary('binary', '%r'))),
+    Example('is converted to strict base64 string unquoted by default (same as %B)',
+      Given(`String($sample)`), Evaluates_to('YmluYXJ5')),
 
-      Example('is converted using %p by default when contained in an array',
-        Given($scope, `String([$sample])`), Evaluates_to("[Binary('YmluYXJ5')]")),
+    Example('is converted using %p by default when contained in an array',
+      Given(`String([$sample])`), Evaluates_to("[Binary('YmluYXJ5')]")),
 
-      {
-							`%s` => `binary`,
-							`%#s` => `'binary'`,
-							`%8s` => `  binary`,
-							`%.2s` => `bi`,
-							`%-8s` => `binary  `,
-							`%p` => `Binary('YmluYXJ5')`,
-							`%b` => "YmluYXJ5\n",
-							`%11b` => "  YmluYXJ5\n",
-							`%-11b` => "YmluYXJ5\n  ",
-							`%.2b` => `Ym`,
-							`%B` => `YmluYXJ5`,
-							`%11B` => `   YmluYXJ5`,
-							`%-11B` => `YmluYXJ5   `,
-							`%.2B` => `Ym`,
-							`%u` => `YmluYXJ5`,
-							`%11u` => `   YmluYXJ5`,
-							`%-11u` => `YmluYXJ5   `,
-							`%.2u` => `Ym`,
-							`%t` => `Binary`,
-							`%#t` => `'Binary'`,
-							`%8t` => `  Binary`,
-							`%-8t` => `Binary  `,
-							`%.3t` => `Bin`,
-							`%T` => `BINARY`,
-							`%#T` => `'BINARY'`,
-							`%8T` => `  BINARY`,
-							`%-8T` => `BINARY  `,
-							`%.3T` => `BIN`,
-      }.map |$fmt, $result| {
-        Example("$fmt produces $result",
-          Given($scope, "String(\$sample, Binary => '$fmt')"), Evaluates_to($result))
-      }
-    ]
-  },
+    {
+            `%s` => `binary`,
+            `%#s` => `'binary'`,
+            `%8s` => `  binary`,
+            `%.2s` => `bi`,
+            `%-8s` => `binary  `,
+            `%p` => `Binary('YmluYXJ5')`,
+            `%b` => "YmluYXJ5\n",
+            `%11b` => "  YmluYXJ5\n",
+            `%-11b` => "YmluYXJ5\n  ",
+            `%.2b` => `Ym`,
+            `%B` => `YmluYXJ5`,
+            `%11B` => `   YmluYXJ5`,
+            `%-11B` => `YmluYXJ5   `,
+            `%.2B` => `Ym`,
+            `%u` => `YmluYXJ5`,
+            `%11u` => `   YmluYXJ5`,
+            `%-11u` => `YmluYXJ5   `,
+            `%.2u` => `Ym`,
+            `%t` => `Binary`,
+            `%#t` => `'Binary'`,
+            `%8t` => `  Binary`,
+            `%-8t` => `Binary  `,
+            `%.3t` => `Bin`,
+            `%T` => `BINARY`,
+            `%#T` => `'BINARY'`,
+            `%8T` => `  BINARY`,
+            `%-8T` => `BINARY  `,
+            `%.3T` => `BIN`,
+    }.map |$fmt, $result| {
+      Example("$fmt produces $result",
+        Given("String(\$sample, Binary => '$fmt')"), Evaluates_to($result))
+    }
+  ),
 
   Example('%u formats in base64 urlsafe mode',
     Given(`String(Binary('++//'), '%u')`), Evaluates_to(`--__`)),
@@ -419,32 +418,31 @@ Examples('String',
     Given(`String('hello world')`), Evaluates_to('hello world')),
 
   Examples('%p produces',
-    Scope(format => { String => '%p' }).with |$scope| {[
+    Given(Scope(format => { String => '%p' })),
 
-      Example('double quoted result for string that contains control characters',
-        Given($scope, `String("hello\tworld.\r\nSun is brigth today.", $format)`), Evaluates_to(`"hello\tworld.\r\nSun is brigth today."`)),
+    Example('double quoted result for string that contains control characters',
+      Given(`String("hello\tworld.\r\nSun is brigth today.", $format)`), Evaluates_to(`"hello\tworld.\r\nSun is brigth today."`)),
 
-      Example('single quoted result for string without \or control characters',
-        Given($scope, `String("hello world", $format)`), Evaluates_to(`'hello world'`)),
+    Example('single quoted result for string without \or control characters',
+      Given(`String("hello world", $format)`), Evaluates_to(`'hello world'`)),
 
-      Example('quoted 2-byte unicode chars',
-        Given($scope, `String("esc \u001b.", $format)`), Evaluates_to(`"esc \u{1B}."`)),
+    Example('quoted 2-byte unicode chars',
+      Given(`String("esc \u001b.", $format)`), Evaluates_to(`"esc \u{1B}."`)),
 
-      Example('escape for $ in double quoted string',
-        Given($scope, `String("escape the \$ sign\n", $format)`), Evaluates_to(`"escape the \$ sign\n"`)),
+    Example('escape for $ in double quoted string',
+      Given(`String("escape the \$ sign\n", $format)`), Evaluates_to(`"escape the \$ sign\n"`)),
 
-      Example('no escape for $ in single quoted string',
-        Given($scope, `String('don\'t escape the $ sign', $format)`), Evaluates_to(`'don\'t escape the $ sign'`)),
+    Example('no escape for $ in single quoted string',
+      Given(`String('don\'t escape the $ sign', $format)`), Evaluates_to(`'don\'t escape the $ sign'`)),
 
-      Example('escape for double quote but not for single quote in double quoted string',
-        Given($scope, `String("the ' single and \" double quote\n", $format)`), Evaluates_to(`"the ' single and \" double quote\n"`)),
+    Example('escape for double quote but not for single quote in double quoted string',
+      Given(`String("the ' single and \" double quote\n", $format)`), Evaluates_to(`"the ' single and \" double quote\n"`)),
 
-      Example('escape for single quote but not for double quote in single quoted string',
-        Given($scope, `String("the ' single and \" double quote", $format)`), Evaluates_to(`'the \' single and " double quote'`)),
+    Example('escape for single quote but not for double quote in single quoted string',
+      Given(`String("the ' single and \" double quote", $format)`), Evaluates_to(`'the \' single and " double quote'`)),
 
-      Example(`escape for last \`,
-        Given($scope, `String("escape the last \\", $format)`), Evaluates_to(`'escape the last \'`)),
-    ]}
+    Example(`escape for last \`,
+      Given(`String("escape the last \\", $format)`), Evaluates_to(`'escape the last \'`)),
   ),
 
   Examples('hello::world',

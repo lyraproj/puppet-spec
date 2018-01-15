@@ -298,11 +298,11 @@ func makeExpectations(name string, level LogLevel, args []PValue) (result []*Lev
 
 func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 	source := actual.(string)
-	return func(assertions Assertions) {
+	return func(tc *TestContext, assertions Assertions) {
 		actual, issues := parseAndValidate(source, false)
 		evaluator := e.example.Evaluator()
 		if !hasError(issues) {
-			_, evalIssues := evaluate(evaluator, actual, e.example.Scope())
+			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
 			issues = append(issues, evalIssues...)
 		}
 		validateExpectations(assertions, e.expectations, issues, evaluator.Logger().(*ArrayLogger))
@@ -315,7 +315,7 @@ func (e *EvaluatesWith) setExample(example *Example) {
 
 func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
 	source := actual.(string)
-	return func(assertions Assertions) {
+	return func(tc *TestContext, assertions Assertions) {
 		_, issues := parseAndValidate(source, true)
 		validateExpectations(assertions, v.expectations, issues, NewArrayLogger())
 	}
@@ -369,6 +369,14 @@ func init() {
 			})
 		})
 
+	NewGoConstructor(`Notice`,
+		func(d Dispatch) {
+			d.RepeatedParam2(EXPECTATIONS_TYPE)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&Expectation{makeExpectations(`Notice`, NOTICE, args)})
+			})
+		})
+
 	NewGoConstructor(`Warning`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
@@ -377,11 +385,18 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Notice`,
+	NewGoConstructor(`Evaluates_ok`,
 		func(d Dispatch) {
-			d.RepeatedParam2(EXPECTATIONS_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&Expectation{makeExpectations(`Notice`, NOTICE, args)})
+				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{}})
+			})
+		})
+
+	NewGoConstructor(`Evaluates_to`,
+		func(d Dispatch) {
+			d.Param(`Any`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&EvaluationResult{nil, args[0]})
 			})
 		})
 
@@ -398,10 +413,18 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Evaluates_ok`,
+	NewGoConstructor(`Parses_to`,
+		func(d Dispatch) {
+			d.Param(`String`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&ParseResult{nil, args[0].String()})
+			})
+		})
+
+	NewGoConstructor(`Validates_ok`,
 		func(d Dispatch) {
 			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{}})
+				return WrapRuntime(&ValidatesWith{nil, []*Expectation{}})
 			})
 		})
 
@@ -415,13 +438,6 @@ func init() {
 					results[idx] = args[idx].(*RuntimeValue).Interface().(*Expectation)
 				}
 				return WrapRuntime(&ValidatesWith{nil, results})
-			})
-		})
-
-	NewGoConstructor(`Validates_ok`,
-		func(d Dispatch) {
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&ValidatesWith{nil, []*Expectation{}})
 			})
 		})
 }
