@@ -410,7 +410,7 @@ Examples('Integer',
     Given(`String(0x1f603, '%#c')`), Evaluates_to("'\u{1f603}'")),
 
   Example('errors when format is not recognized',
-    Given(`String(18,'%k')`), Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENT, `Illegal format 'k' specified for value of Integer type - expected one of the characters 'dxXobBeEfgGaAspc'`))),
+    Given(`String(18,'%k')`), Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENT, message => Contain(`Illegal format 'k' specified for value of Integer type - expected one of the characters 'dxXobBeEfgGaAspc'`))))),
 )
 
 Examples('String',

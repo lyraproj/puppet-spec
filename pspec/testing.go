@@ -147,8 +147,8 @@ func (v *TestGroup) Tests() []Test {
 	return v.tests
 }
 
-func parseAndValidate(source string, singleExpression bool) (Expression, []*ReportedIssue) {
-	expr, err := CreateParser().Parse(``, source, false, singleExpression)
+func parseAndValidate(name, source string, singleExpression bool) (Expression, []*ReportedIssue) {
+	expr, err := CreateParser().Parse(name, source, false, singleExpression)
 	var issues []*ReportedIssue
 	if err != nil {
 		issue, ok := err.(*ReportedIssue)

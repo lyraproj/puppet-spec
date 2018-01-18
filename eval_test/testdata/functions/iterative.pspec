@@ -4,12 +4,12 @@
 
     Example('passes a hash entry as an array of the key and value',
       Given(`$func.call({a=>1}) |$v| { notice($v[0], $v[1]) }`),
-      Evaluates_with(Notice('a', '1'))),
+      Evaluates_with(Notice('a1'))),
 
     Examples('raises an error when',
       Example('used against an unsupported type',
         Given(`$func.call(3.14)  |$k, $v| {  }`),
-        Evaluates_with(Error(/expects an Iterable value, got Float/))),
+        Evaluates_with(Error(/expects a value of type Hash or Iterable, got Float/))),
 
       Example('called with any parameters besides a block',
         Given(`$func.call([1], 1, 2)  |$k, $v| {  }`),

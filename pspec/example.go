@@ -3,11 +3,11 @@ package pspec
 import (
 	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-evaluator/types"
-	"reflect"
 	. "github.com/puppetlabs/go-pspec/testutils"
 	. "github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/pcore"
 	.	"github.com/puppetlabs/go-parser/issue"
+	"fmt"
 )
 
 type (
@@ -68,6 +68,11 @@ type (
 		sources []string
 	}
 
+	NamedSource struct {
+    name string
+    source string
+	}
+
 	SettingsInput struct {
 		settings PValue
 	}
@@ -77,12 +82,23 @@ type (
 	}
 )
 
+func pathAndContent(source interface{}) (path, content string) {
+	switch source.(type) {
+	case string:
+		return ``, source.(string)
+	case *NamedSource:
+		ns := source.(*NamedSource)
+		return ns.name, ns.source
+	default:
+		panic(Error(EVAL_FAILURE, H{`message`: fmt.Sprintf(`Unknown source type %T`, source)}))
+	}
+}
 
 func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
-	source := actual.(string)
+	path, source := pathAndContent(actual)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(source, false)
+		actual, issues := parseAndValidate(path, source, false)
 		failOnError(assertions, issues)
 		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
 		failOnError(assertions, evalIssues)
@@ -168,11 +184,11 @@ func (n *node) Get(key string) (v LazyValue, ok bool) {
 }
 
 func (p *ParseResult) CreateTest(actual interface{}) Executable {
-	source := actual.(string)
+	path, source := pathAndContent(actual)
 	expectedPN := ParsePN(``, p.expected)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(source, true)
+		actual, issues := parseAndValidate(path, source, true)
 		failOnError(assertions, issues)
 		actualPN := actual.ToPN()
 		assertions.AssertEquals(expectedPN.String(), actualPN.String())
@@ -215,12 +231,20 @@ func (i *Source) CreateTests(expected Result) []Executable {
 	return result
 }
 
+func (i *Source) AsInput() Input {
+	return i
+}
+
+func (ns *NamedSource) CreateTests(expected Result) []Executable {
+	return []Executable{expected.CreateTest(ns)}
+}
+
 func init() {
 	NewGoConstructor2(`Example`,
 		func(l LocalTypes) {
-			l.Type(`Given`, `Runtime[go, '*pspec.Given']`)
-			l.Type(`Let`, `Runtime[go, '*pspec.LazyValueLet']`)
-			l.Type2(`Result`, NewRuntimeType3(reflect.TypeOf([]Result{}).Elem()))
+			l.Type2(`Given`, NewGoRuntimeType([]*Given{}))
+			l.Type2(`Let`, NewGoRuntimeType([]*LazyValueLet{}))
+			l.Type2(`Result`, NewGoRuntimeType([]Result{}))
 		},
 		func(d Dispatch) {
 			d.Param(`String`)
@@ -254,9 +278,9 @@ func init() {
 
 	NewGoConstructor2(`Examples`,
 		func(l LocalTypes) {
-			l.Type(`Given`, `Runtime[go, '*pspec.Given']`)
-			l.Type(`Let`, `Runtime[go, '*pspec.LazyValueLet']`)
-			l.Type2(`Node`, NewRuntimeType3(reflect.TypeOf([]Node{}).Elem()))
+			l.Type2(`Given`, NewGoRuntimeType([]*Given{}))
+			l.Type2(`Let`, NewGoRuntimeType([]*LazyValueLet{}))
+			l.Type2(`Node`, NewGoRuntimeType([]Node{}))
 			l.Type(`Nodes`, `Variant[Node, Array[Nodes]]`)
 		},
 		func(d Dispatch) {
@@ -287,7 +311,7 @@ func init() {
 
 	NewGoConstructor(`Given`,
 		func(d Dispatch) {
-			d.RepeatedParam2(NewVariantType2(DefaultStringType(), NewRuntimeType3(reflect.TypeOf([]Input{}).Elem())))
+			d.RepeatedParam2(NewVariantType2(DefaultStringType(), NewGoRuntimeType([]Input{})))
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				argc := len(args)
 				inputs := make([]Input, argc)
@@ -329,6 +353,15 @@ func init() {
 					sources[idx] = args[idx].String()
 				}
 				return WrapRuntime(&Source{sources})
+			})
+		})
+
+	NewGoConstructor(`NamedSource`,
+		func(d Dispatch) {
+			d.Param(`String`)
+			d.Param(`String`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+			return WrapRuntime(&NamedSource{args[0].String(),args[1].String()})
 			})
 		})
 

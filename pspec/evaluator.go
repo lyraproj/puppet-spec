@@ -67,8 +67,8 @@ func (s *specEval) Eval(expression Expression, ctx EvalContext) PValue {
 	}
 }
 
-func (s *specEval) ResolveDefinitions() {
-	s.evaluator.ResolveDefinitions()
+func (s *specEval) ResolveDefinitions(c EvalContext) {
+	s.evaluator.ResolveDefinitions(c)
 }
 
 func (s *specEval) addNode(n Node) {

@@ -13,7 +13,7 @@ Examples('the assert_type function',
 
   Example('checks that first argument is a type or a string',
     Given(`assert_type(10, 10)`),
-    Evaluates_with(Error(/expects a Type value, got Integer/))),
+    Evaluates_with(Error(/value of type String or Type, got Integer/))),
 
   Example('allows the second arg to be undef',
     Given(`assert_type(Optional[String], undef)`),

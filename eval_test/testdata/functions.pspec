@@ -74,6 +74,10 @@ Examples('call function',
       Example('type as string',
         Given(`assert_type('Variant[String, Integer]', 23)`),
         Evaluates_to(23)),
+
+      Example('block but no arguments',
+        Given(`with || { notice('what') }`),
+        Evaluates_with(Notice('what'))),
       ),
 
     Examples('each',
