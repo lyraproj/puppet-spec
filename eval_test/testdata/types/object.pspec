@@ -1,0 +1,77 @@
+Examples('the Object type',
+  Examples('can be declared',
+    Example('using keyword Object and bracketed parameter list with hash',
+      Given(@(SRC)),
+        type MyType = Object[{
+          attributes => {
+            p1 => String
+          }
+        }]
+        notice(MyType)
+        |-SRC
+      Evaluates_with(Notice('MyType'))),
+
+    Example('using keyword Object and hash',
+      Given(@(SRC)),
+        type MyType = Object{
+          attributes => {
+            p1 => String
+          }
+        }
+        notice(MyType)
+        |-SRC
+      Evaluates_with(Notice('MyType'))),
+
+    Example('just a hash',
+      Given(@(SRC)),
+        type MyType = {
+          attributes => {
+            p1 => String
+          }
+        }
+        notice(MyType)
+        |-SRC
+      Evaluates_with(Notice('MyType'))),
+
+    Example('just a one element array with a hash',
+      Given(@(SRC)),
+        type MyType = [{
+          attributes => {
+            p1 => String
+          }
+        }]
+        notice(MyType)
+        |-SRC
+      Evaluates_with(Notice('MyType'))),
+  ),
+
+  Example('with type parameters',
+    Given(@(SRC)),
+      type MyType = {
+        type_parameters => {
+          p1 => String
+        }
+      }
+      notice(MyType)
+      |-SRC
+    Evaluates_with(Notice('MyType'))),
+
+  Examples('raises an error when',
+    Example('type parameters type is not a type',
+      Given(@(SRC)),
+        type MyType = Object[{
+          type_parameters => { a => 23 }
+        }]
+        notice(MyType)
+        |-SRC
+       Evaluates_with(Error(EVAL_TYPE_MISMATCH, 'type_parameter MyType[a] expects a Type value, got Integer'))),
+    Example('the type parameter value is present',
+      Given(@(SRC)),
+        type MyType = Object[{
+          type_parameters => { a => { type => Integer, value => 0 }}
+        }]
+        notice(MyType)
+        |-SRC
+      Evaluates_with(Error(EVAL_TYPE_MISMATCH, /unrecognized key 'value'/))),
+  ),
+)
