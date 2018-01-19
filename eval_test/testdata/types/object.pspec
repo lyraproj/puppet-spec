@@ -64,7 +64,7 @@ Examples('the Object type',
         }]
         notice(MyType)
         |-SRC
-       Evaluates_with(Error(EVAL_TYPE_MISMATCH, 'type_parameter MyType[a] expects a Type value, got Integer'))),
+       Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain('type_parameter MyType[a] expects a Type value, got Integer'))))),
     Example('the type parameter value is present',
       Given(@(SRC)),
         type MyType = Object[{
