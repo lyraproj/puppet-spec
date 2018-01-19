@@ -210,10 +210,21 @@ func (im *IssueMatch) MatchIssue(issue *ReportedIssue) bool {
 		}
 		a := im.argsMap.Get(k, nil)
 		if m, ok := a.(Match); ok {
-			s, ok := v.(string)
-			if !(ok && m.MatchString(s)) {
-				return false
+			switch v.(type) {
+			case string:
+				if m.MatchString(v.(string)) {
+					continue
+				}
+			case byte:
+				if m.MatchString(string([]byte{v.(byte)})) {
+					continue
+				}
+			case rune:
+				if m.MatchString(string([]rune{v.(rune)})) {
+					continue
+				}
 			}
+			return false
 		} else {
 			if !Equals(a, WrapUnknown(v)) {
 				return false
