@@ -23,7 +23,7 @@ func RunPspecTests(t *testing.T, testRoot string) {
 	logger := NewStdLogger()
 	if baseLoader == nil {
 		baseLoader = NewParentedLoader(pcore.NewPcore(logger).SystemLoader())
-		ResolveGoFunctions(baseLoader, logger)
+		ResolveResolvables(baseLoader, logger)
 	}
 	baseLoaderLock.Unlock()
 	loader := NewParentedLoader(baseLoader)
