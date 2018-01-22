@@ -45,6 +45,22 @@ Examples('the Object type',
       Evaluates_with(Notice('MyType'))),
   ),
 
+  Examples('when creating instance',
+    Examples('using positional arguments',
+      Example('all required',
+        Given(@(SRC)),
+          type MyType = {
+            attributes => {
+              p1 => String,
+              p2 => Integer
+            }
+          }
+          notice(MyType('hello', 23))
+          |-SRC
+        Evaluates_with(Notice(`MyType('p1' => 'hello', 'p2' => 23)`))),
+    ),
+  ),
+
   Examples('with type parameters',
     Example('can be declared',
     Given(@(SRC)),
