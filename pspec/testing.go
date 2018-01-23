@@ -1,16 +1,16 @@
 package pspec
 
 import (
+	. "github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/evaluator"
-	. "github.com/puppetlabs/go-parser/parser"
-	. "github.com/puppetlabs/go-parser/issue"
-	. "github.com/puppetlabs/go-parser/validator"
 	. "github.com/puppetlabs/go-evaluator/pcore"
 	. "github.com/puppetlabs/go-evaluator/types"
-	. "github.com/puppetlabs/go-evaluator/eval"
+	. "github.com/puppetlabs/go-parser/issue"
+	. "github.com/puppetlabs/go-parser/parser"
+	. "github.com/puppetlabs/go-parser/validator"
 )
 
-type(
+type (
 	Assertions interface {
 		AssertEquals(a interface{}, b interface{})
 
@@ -27,11 +27,11 @@ type(
 	}
 
 	TestContext struct {
-		parent *TestContext
-		node Node
+		parent         *TestContext
+		node           Node
 		accessedValues map[int64]PValue
-		tearDowns []Housekeeping
-		scope Scope
+		tearDowns      []Housekeeping
+		scope          Scope
 	}
 
 	testNode struct {
@@ -77,7 +77,7 @@ func (tc *TestContext) getLazyValue(key string) LazyValue {
 	return tc.parent.getLazyValue(key)
 }
 
-func (tc* TestContext) registerTearDown(td Housekeeping) {
+func (tc *TestContext) registerTearDown(td Housekeeping) {
 	tc.tearDowns = append(tc.tearDowns, td)
 }
 

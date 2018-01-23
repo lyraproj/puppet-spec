@@ -1,17 +1,17 @@
 package pspec
 
 import (
-	. "github.com/puppetlabs/go-evaluator/evaluator"
-	. "github.com/puppetlabs/go-evaluator/types"
-	. "github.com/puppetlabs/go-pspec/testutils"
-	. "github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/pcore"
-	.	"github.com/puppetlabs/go-parser/issue"
 	"fmt"
+
+	. "github.com/puppetlabs/go-evaluator/eval"
+	. "github.com/puppetlabs/go-evaluator/evaluator"
+	. "github.com/puppetlabs/go-evaluator/pcore"
+	. "github.com/puppetlabs/go-evaluator/types"
+	. "github.com/puppetlabs/go-parser/issue"
+	. "github.com/puppetlabs/go-pspec/testutils"
 )
 
 type (
-
 	Input interface {
 		CreateTests(expected Result) []Executable
 	}
@@ -35,19 +35,19 @@ type (
 
 	node struct {
 		description string
-		values map[string]LazyValue
+		values      map[string]LazyValue
 		given       *Given
 	}
 
 	Example struct {
 		node
-		result      Result
-		evaluator   Evaluator
+		result    Result
+		evaluator Evaluator
 	}
 
 	Examples struct {
 		node
-		children    []Node
+		children []Node
 	}
 
 	Given struct {
@@ -69,8 +69,8 @@ type (
 	}
 
 	NamedSource struct {
-    name string
-    source string
+		name   string
+		source string
 	}
 
 	SettingsInput struct {
@@ -123,13 +123,13 @@ func (n *node) addLetDefs(lazyValueLets []*LazyValueLet) {
 }
 
 func newExample(description string, given *Given, result Result) *Example {
-	e := &Example{result:result}
+	e := &Example{result: result}
 	e.node.initialize(description, given)
 	return e
 }
 
 func newExamples(description string, given *Given, children []Node) *Examples {
-	e := &Examples{children:children}
+	e := &Examples{children: children}
 	e.node.initialize(description, given)
 	return e
 }
@@ -204,7 +204,7 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
 		settings, ok := tc.resolveLazyValues(s.settings).(*HashValue)
 		if !ok {
-			Error(PSPEC_VALUE_NOT_HASH, H{`type`:`Settings`})
+			Error(PSPEC_VALUE_NOT_HASH, H{`type`: `Settings`})
 		}
 		p := Puppet
 		for _, e := range settings.EntriesSlice() {
@@ -217,7 +217,7 @@ func (s *ScopeInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
 		scope, ok := tc.resolveLazyValues(s.scope).(*HashValue)
 		if !ok {
-			Error(PSPEC_VALUE_NOT_HASH, H{`type`:`Scope`})
+			Error(PSPEC_VALUE_NOT_HASH, H{`type`: `Scope`})
 		}
 		tc.scope = NewScope2(scope)
 	}}
@@ -361,7 +361,7 @@ func init() {
 			d.Param(`String`)
 			d.Param(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
-			return WrapRuntime(&NamedSource{args[0].String(),args[1].String()})
+				return WrapRuntime(&NamedSource{args[0].String(), args[1].String()})
 			})
 		})
 

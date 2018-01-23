@@ -1,13 +1,14 @@
 package pspec
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sync/atomic"
+
 	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-evaluator/types"
-	"io/ioutil"
-	"path/filepath"
-	"os"
 	"github.com/puppetlabs/go-parser/issue"
-	"sync/atomic"
 )
 
 type (
@@ -22,7 +23,7 @@ type (
 
 	LazyValueLet struct {
 		valueName string
-		value LazyValue
+		value     LazyValue
 	}
 
 	lazyValue struct {
@@ -47,7 +48,7 @@ type (
 
 var nextLazyId = int64(0)
 
-func (lv* lazyValue) initialize() {
+func (lv *lazyValue) initialize() {
 	lv.id = atomic.AddInt64(&nextLazyId, 1)
 }
 
@@ -61,12 +62,12 @@ func newGenericValue(content PValue) *GenericValue {
 	return d
 }
 
-func (lg* LazyValueGet) Get(tc *TestContext) PValue {
-  return tc.Get(tc.getLazyValue(lg.valueName))
+func (lg *LazyValueGet) Get(tc *TestContext) PValue {
+	return tc.Get(tc.getLazyValue(lg.valueName))
 }
 
 func (gv *GenericValue) Get(tc *TestContext) PValue {
-  return tc.resolveLazyValues(gv.content)
+	return tc.resolveLazyValues(gv.content)
 }
 
 func newDirectoryValue(content PValue) *DirectoryValue {
@@ -82,10 +83,10 @@ func (dv *DirectoryValue) Get(tc *TestContext) PValue {
 	}
 	dir, ok := tc.resolveLazyValues(dv.content).(*HashValue)
 	if !ok {
-		Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`:`Directory`})
+		Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`})
 	}
 	makeDirectories(tmpDir, dir)
-	tc.registerTearDown(func () {
+	tc.registerTearDown(func() {
 		err := os.RemoveAll(tmpDir)
 		if err != nil {
 			panic(err)
@@ -107,7 +108,7 @@ func (dv *FileValue) Get(tc *TestContext) PValue {
 	}
 	path := tmpFile.Name()
 	writeFileValue(path, tc.resolveLazyValues(dv.content))
-	tc.registerTearDown(func () {
+	tc.registerTearDown(func() {
 		err := os.Remove(path)
 		if err != nil {
 			panic(err)

@@ -5,13 +5,14 @@ import (
 	"sync"
 	"testing"
 
+	"os"
+	"path/filepath"
+	"strings"
+
 	. "github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/evaluator"
-	. "github.com/puppetlabs/go-parser/parser"
 	"github.com/puppetlabs/go-evaluator/pcore"
-	"path/filepath"
-	"os"
-	"strings"
+	. "github.com/puppetlabs/go-parser/parser"
 )
 
 var baseLoader DefiningLoader
@@ -53,10 +54,10 @@ func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
 
 	for _, test := range tests {
 		ctx := &TestContext{
-			parent: parentContext,
-			tearDowns: make([]Housekeeping, 0),
+			parent:         parentContext,
+			tearDowns:      make([]Housekeeping, 0),
 			accessedValues: make(map[int64]PValue, 32),
-			node: test.Node()}
+			node:           test.Node()}
 
 		if testExec, ok := test.(*TestExecutable); ok {
 			t.Run(testExec.Name(), func(s *testing.T) {

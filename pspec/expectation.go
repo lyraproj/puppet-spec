@@ -5,12 +5,13 @@ import (
 	. "fmt"
 	"regexp"
 
+	"strings"
+
 	. "github.com/puppetlabs/go-evaluator/evaluator"
+	"github.com/puppetlabs/go-evaluator/hash"
 	. "github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-evaluator/utils"
 	. "github.com/puppetlabs/go-parser/issue"
-	"strings"
-	"github.com/puppetlabs/go-evaluator/hash"
 )
 
 type (
@@ -45,7 +46,7 @@ type (
 
 	StringMatch struct {
 		partial bool
-		text string
+		text    string
 	}
 
 	RegexpMatch struct {
@@ -63,7 +64,7 @@ type (
 	}
 )
 
-var EXPECT_OK = &Expectation{levelExpectations:[]*LevelExpectation{}}
+var EXPECT_OK = &Expectation{levelExpectations: []*LevelExpectation{}}
 
 func (e *Expectation) MatchEntries(b *bytes.Buffer, log *ArrayLogger, issues []*ReportedIssue) {
 	for _, level := range []LogLevel{NOTICE, WARNING, ERR} {
@@ -127,7 +128,7 @@ nextIssue:
 			}
 		}
 		if !excluded {
-			Fprintf(b, "Unexpected %s\n", issue.String())
+			Fprintf(b, "Unexpected %s: %s\n", issue.Code(), issue.String())
 		}
 	}
 
@@ -429,7 +430,7 @@ func init() {
 						argsMap.Put(k.String(), makeIssueArgMatch(v))
 					})
 				}
-				return WrapRuntime(&IssueMatch{issue:args[0].(*RuntimeValue).Interface().(*Issue), argsMap: argsMap})
+				return WrapRuntime(&IssueMatch{issue: args[0].(*RuntimeValue).Interface().(*Issue), argsMap: argsMap})
 			})
 		})
 
@@ -491,6 +492,13 @@ func init() {
 				}
 				return WrapRuntime(&EvaluatesWith{nil, results})
 			})
+		},
+
+		func(d Dispatch) {
+			d.RepeatedParam2(EXPECTATIONS_TYPE)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, ERR, args)}}})
+			})
 		})
 
 	NewGoConstructor(`Parses_to`,
@@ -518,6 +526,13 @@ func init() {
 					results[idx] = args[idx].(*RuntimeValue).Interface().(*Expectation)
 				}
 				return WrapRuntime(&ValidatesWith{nil, results})
+			})
+		},
+
+		func(d Dispatch) {
+			d.RepeatedParam2(EXPECTATIONS_TYPE)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(&ValidatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, ERR, args)}}})
 			})
 		})
 }
