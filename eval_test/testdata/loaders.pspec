@@ -9,7 +9,12 @@ Examples('file based loader',
           |-END
         },
       'types' => {
-        'mytype.pp' => 'type Mod::Mytype = Integer[0, 127]'
+        'myalias.pp' => 'type Mod::Myalias = Integer[0, 127]',
+        'mytype.pp' => @(END)
+          type Mod::Mytype = {
+            attributes => { 'a' => Integer }
+          }
+          |-END
         },
     }
   ))),
@@ -20,9 +25,15 @@ Examples('file based loader',
       |-SRC
     Evaluates_to('hello from myfunc')),
 
-  Example('loads a type in a module',
+  Example('loads a type alias in a module',
     Given(@(SRC)),
-      String(Mod::Mytype)
+      String(Mod::Myalias)
       |-SRC
-    Evaluates_to('Mod::Mytype')),
+    Evaluates_to('Mod::Myalias')),
+
+  Example('loads an object type in a module',
+    Given(@(SRC)),
+      String(Mod::Mytype(23))
+      |-SRC
+    Evaluates_to(`Mod::Mytype('a' => 23)`)),
 )
