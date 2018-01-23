@@ -150,7 +150,7 @@ func writeFileValue(path string, value PValue) {
 }
 
 func init() {
-	NewGoConstructor(`Directory`,
+	NewGoConstructor(`PSpec::Directory`,
 		func(d Dispatch) {
 			d.Param(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -158,7 +158,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`File`,
+	NewGoConstructor(`PSpec::File`,
 		func(d Dispatch) {
 			d.Param(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -166,7 +166,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Get`,
+	NewGoConstructor(`PSpec::Get`,
 		func(d Dispatch) {
 			d.Param(`String[1]`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -174,7 +174,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Let`,
+	NewGoConstructor(`PSpec::Let`,
 		func(d Dispatch) {
 			d.Param(`String[1]`)
 			d.Param(`Any`)

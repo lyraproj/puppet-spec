@@ -22,6 +22,35 @@ type (
 	}
 )
 
+var PSPEC_QREFS = map[string]string{
+	`Contain`:        `PSpec::Contain`,
+	`Directory`:      `PSpec::Directory`,
+	`Error`:          `PSpec::Error`,
+	`Evaluates_ok`:   `PSpec::Evaluates_ok`,
+	`Evaluates_to`:   `PSpec::Evaluates_to`,
+	`Evaluates_with`: `PSpec::Evaluates_with`,
+	`Example`:        `PSpec::Example`,
+	`Examples`:       `PSpec::Examples`,
+	`Exclude`:        `PSpec::Exclude`,
+	`File`:           `PSpec::File`,
+	`Get`:            `PSpec::Get`,
+	`Given`:          `PSpec::Given`,
+	`Include`:        `PSpec::Include`,
+	`Issue`:          `PSpec::Issue`,
+	`Let`:            `PSpec::Let`,
+	`NamedSource`:    `PSpec::NamedSource`,
+	`Notice`:         `PSpec::Notice`,
+	`Scope`:          `PSpec::Scope`,
+	`Settings`:       `PSpec::Settings`,
+	`Source`:         `PSpec::Source`,
+	`Match`:          `PSpec::Match`,
+	`Parses_to`:      `PSpec::Parses_to`,
+	`Validates_ok`:   `PSpec::Validates_ok`,
+	`Validates_with`: `PSpec::Validates_with`,
+	`Warning`:        `PSpec::Warning`,
+	`Unindent`:       `PSpec::Unindent`,
+}
+
 func NewSpecEvaluator(loader DefiningLoader) SpecEvaluator {
 	specEval := &specEval{nodes: make([]Node, 0), path: make([]Expression, 0)}
 	specEval.evaluator = NewOverriddenEvaluator(loader, NewStdLogger(), specEval)
@@ -62,6 +91,8 @@ func (s *specEval) Eval(expression Expression, ctx EvalContext) PValue {
 		return s.eval_BlockExpression(expression.(*BlockExpression), ctx)
 	case *QualifiedReference:
 		return s.eval_QualifiedReference(expression.(*QualifiedReference), ctx)
+	case *CallNamedFunctionExpression:
+		return s.eval_CallNamedFunctionExpression(expression.(*CallNamedFunctionExpression), ctx)
 	default:
 		return s.evaluator.Eval(expression, ctx)
 	}
@@ -106,7 +137,19 @@ func (s *specEval) eval_QualifiedReference(qr *QualifiedReference, ctx EvalConte
 	if i, ok := IssueForCode2(IssueCode(qr.Name())); ok {
 		return WrapRuntime(i)
 	}
+	if p, ok := PSPEC_QREFS[qr.Name()]; ok {
+		qr = qr.WithName(p)
+	}
 	return s.evaluator.Eval(qr, ctx)
+}
+
+func (s *specEval) eval_CallNamedFunctionExpression(call *CallNamedFunctionExpression, c EvalContext) PValue {
+	if qr, ok := call.Functor().(*QualifiedReference); ok {
+		if p, ok := PSPEC_QREFS[qr.Name()]; ok {
+			call = call.WithFunctor(qr.WithName(p))
+		}
+	}
+	return s.evaluator.Eval(call, c)
 }
 
 func hasError(issues []*ReportedIssue) bool {

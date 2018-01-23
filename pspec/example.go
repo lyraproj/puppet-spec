@@ -240,7 +240,7 @@ func (ns *NamedSource) CreateTests(expected Result) []Executable {
 }
 
 func init() {
-	NewGoConstructor2(`Example`,
+	NewGoConstructor2(`PSpec::Example`,
 		func(l LocalTypes) {
 			l.Type2(`Given`, NewGoRuntimeType([]*Given{}))
 			l.Type2(`Let`, NewGoRuntimeType([]*LazyValueLet{}))
@@ -276,7 +276,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor2(`Examples`,
+	NewGoConstructor2(`PSpec::Examples`,
 		func(l LocalTypes) {
 			l.Type2(`Given`, NewGoRuntimeType([]*Given{}))
 			l.Type2(`Let`, NewGoRuntimeType([]*LazyValueLet{}))
@@ -309,7 +309,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Given`,
+	NewGoConstructor(`PSpec::Given`,
 		func(d Dispatch) {
 			d.RepeatedParam2(NewVariantType2(DefaultStringType(), NewGoRuntimeType([]Input{})))
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -327,7 +327,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Settings`,
+	NewGoConstructor(`PSpec::Settings`,
 		func(d Dispatch) {
 			d.Param(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -335,7 +335,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Scope`,
+	NewGoConstructor(`PSpec::Scope`,
 		func(d Dispatch) {
 			d.Param(`Hash[Pattern[/\A[a-z_]\w*\z/],Any]`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -343,7 +343,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Source`,
+	NewGoConstructor(`PSpec::Source`,
 		func(d Dispatch) {
 			d.RepeatedParam(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -356,7 +356,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`NamedSource`,
+	NewGoConstructor(`PSpec::NamedSource`,
 		func(d Dispatch) {
 			d.Param(`String`)
 			d.Param(`String`)
@@ -365,7 +365,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Unindent`,
+	NewGoConstructor(`PSpec::Unindent`,
 		func(d Dispatch) {
 			d.Param(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {

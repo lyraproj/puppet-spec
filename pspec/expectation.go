@@ -394,7 +394,7 @@ func validateExpectations(assertions Assertions, expectations []*Expectation, is
 
 func init() {
 
-	NewGoConstructor(`Exclude`,
+	NewGoConstructor(`PSpec::Exclude`,
 		func(d Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -402,7 +402,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Include`,
+	NewGoConstructor(`PSpec::Include`,
 		func(d Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -410,7 +410,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Contain`,
+	NewGoConstructor(`PSpec::Contain`,
 		func(d Dispatch) {
 			d.Param(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -418,7 +418,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Issue`,
+	NewGoConstructor(`PSpec::Issue`,
 		func(d Dispatch) {
 			d.Param2(NewGoRuntimeType([]*Issue{}))
 			d.OptionalParam(`Hash[String,Any]`)
@@ -434,7 +434,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Match`,
+	NewGoConstructor(`PSpec::Match`,
 		func(d Dispatch) {
 			d.Param2(MATCH_ARG_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -442,7 +442,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Error`,
+	NewGoConstructor(`PSpec::Error`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -450,7 +450,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Notice`,
+	NewGoConstructor(`PSpec::Notice`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -458,7 +458,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Warning`,
+	NewGoConstructor(`PSpec::Warning`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -466,14 +466,14 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Evaluates_ok`,
+	NewGoConstructor(`PSpec::Evaluates_ok`,
 		func(d Dispatch) {
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
 
-	NewGoConstructor(`Evaluates_to`,
+	NewGoConstructor(`PSpec::Evaluates_to`,
 		func(d Dispatch) {
 			d.Param(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -481,7 +481,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Evaluates_with`,
+	NewGoConstructor(`PSpec::Evaluates_with`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -501,7 +501,7 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Parses_to`,
+	NewGoConstructor(`PSpec::Parses_to`,
 		func(d Dispatch) {
 			d.Param(`String`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
@@ -509,14 +509,14 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`Validates_ok`,
+	NewGoConstructor(`PSpec::Validates_ok`,
 		func(d Dispatch) {
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				return WrapRuntime(&ValidatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
 
-	NewGoConstructor(`Validates_with`,
+	NewGoConstructor(`PSpec::Validates_with`,
 		func(d Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
 			d.Function(func(c EvalContext, args []PValue) PValue {
