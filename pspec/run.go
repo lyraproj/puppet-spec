@@ -46,10 +46,10 @@ func RunPspecTests(t *testing.T, testRoot string) {
 	for _, testFile := range testFiles {
 		tests = append(tests, NewSpecEvaluator(loader).CreateTests(parseTestContents(t, testFile), loader)...)
 	}
-	runTests(t, tests, nil)
+	runTests(t, loader, tests, nil)
 }
 
-func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
+func runTests(t *testing.T, loader Loader, tests []Test, parentContext *TestContext) {
 	t.Helper()
 
 	for _, test := range tests {
@@ -57,7 +57,8 @@ func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
 			parent:         parentContext,
 			tearDowns:      make([]Housekeeping, 0),
 			accessedValues: make(map[int64]PValue, 32),
-			node:           test.Node()}
+			node:           test.Node(),
+			loader:         loader}
 
 		if testExec, ok := test.(*TestExecutable); ok {
 			t.Run(testExec.Name(), func(s *testing.T) {
@@ -65,7 +66,7 @@ func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
 			})
 		} else if testGroup, ok := test.(*TestGroup); ok {
 			t.Run(testGroup.Name(), func(s *testing.T) {
-				runTests(s, testGroup.Tests(), ctx)
+				runTests(s, loader, testGroup.Tests(), ctx)
 			})
 		}
 	}

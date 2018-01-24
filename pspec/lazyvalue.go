@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
+	"github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-parser/parser"
 )
 
 type (
@@ -44,6 +46,16 @@ type (
 		lazyValue
 		content PValue
 	}
+
+	QuoteValue struct {
+		lazyValue
+		text PValue
+	}
+
+	LazyScope struct {
+		eval.BasicScope
+		ctx *TestContext
+	}
 )
 
 var nextLazyId = int64(0)
@@ -63,7 +75,10 @@ func newGenericValue(content PValue) *GenericValue {
 }
 
 func (lg *LazyValueGet) Get(tc *TestContext) PValue {
-	return tc.Get(tc.getLazyValue(lg.valueName))
+	if lv, ok := tc.getLazyValue(lg.valueName); ok {
+		return tc.Get(lv)
+	}
+	panic(Error(PSPEC_GET_OF_UNKNOWN_VARIABLE, issue.H{`name`: lg.valueName}))
 }
 
 func (gv *GenericValue) Get(tc *TestContext) PValue {
@@ -83,7 +98,7 @@ func (dv *DirectoryValue) Get(tc *TestContext) PValue {
 	}
 	dir, ok := tc.resolveLazyValues(dv.content).(*HashValue)
 	if !ok {
-		Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`})
+		panic(Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`}))
 	}
 	makeDirectories(tmpDir, dir)
 	tc.registerTearDown(func() {
@@ -115,6 +130,40 @@ func (dv *FileValue) Get(tc *TestContext) PValue {
 		}
 	})
 	return WrapString(path)
+}
+
+func newQuoteValue(text PValue) *QuoteValue {
+	d := &QuoteValue{text: text}
+	d.lazyValue.initialize()
+	return d
+}
+
+func (q *QuoteValue) Get(tc *TestContext) PValue {
+	text, ok := tc.resolveLazyValues(q.text).(*StringValue)
+	if !ok {
+		panic(Error(PSPEC_QUOTE_NOT_STRING, issue.NO_ARGS))
+	}
+
+	ex, err := parser.CreateParser().Parse(``, `"`+text.String()+`"`, false, true)
+	if err != nil {
+		panic(err)
+	}
+
+	// Expressions within the concatenated string may be Get expressions and must
+	// be resolved while concatenating.
+	result, specErr := eval.NewEvaluator(tc.loader.(DefiningLoader), NewStdLogger()).Evaluate(ex, tc.newLazyScope(), tc.loader)
+	if specErr != nil {
+		panic(specErr)
+	}
+	return result
+}
+
+func (ls *LazyScope) Get(name string) (value PValue, found bool) {
+	tc := ls.ctx
+	if lv, ok := tc.getLazyValue(name); ok {
+		return tc.Get(lv), true
+	}
+	return ls.BasicScope.Get(name)
 }
 
 func makeDirectories(parent string, hash *HashValue) {
@@ -163,6 +212,14 @@ func init() {
 			d.Param(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				return WrapRuntime(newFileValue(args[0]))
+			})
+		})
+
+	NewGoConstructor(`PSpec::Quote`,
+		func(d Dispatch) {
+			d.Param(`Any`)
+			d.Function(func(c EvalContext, args []PValue) PValue {
+				return WrapRuntime(newQuoteValue(args[0]))
 			})
 		})
 

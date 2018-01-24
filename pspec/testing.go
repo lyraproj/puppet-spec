@@ -32,6 +32,7 @@ type (
 		accessedValues map[int64]PValue
 		tearDowns      []Housekeeping
 		scope          Scope
+		loader         Loader
 	}
 
 	testNode struct {
@@ -59,6 +60,10 @@ func (tc *TestContext) Get(l LazyValue) PValue {
 	return v
 }
 
+func (tc *TestContext) newLazyScope() *LazyScope {
+	return &LazyScope{*tc.scope.(*BasicScope), tc}
+}
+
 func (tc *TestContext) Scope() Scope {
 	if tc.scope == nil {
 		tc.scope = NewScope()
@@ -66,13 +71,13 @@ func (tc *TestContext) Scope() Scope {
 	return tc.scope
 }
 
-func (tc *TestContext) getLazyValue(key string) LazyValue {
+func (tc *TestContext) getLazyValue(key string) (LazyValue, bool) {
 	v, ok := tc.node.Get(key)
 	if ok {
-		return v
+		return v, true
 	}
 	if tc.parent == nil {
-		panic(Error(PSPEC_GET_OF_UNKNOWN_VARIABLE, H{`name`: key}))
+		return nil, false
 	}
 	return tc.parent.getLazyValue(key)
 }

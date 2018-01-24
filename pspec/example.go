@@ -102,7 +102,7 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 		failOnError(assertions, issues)
 		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
 		failOnError(assertions, evalIssues)
-		assertions.AssertEquals(e.expected, actualResult)
+		assertions.AssertEquals(context.resolveLazyValues(e.expected), actualResult)
 	}
 }
 
