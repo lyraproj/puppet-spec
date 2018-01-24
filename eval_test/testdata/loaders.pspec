@@ -1,23 +1,75 @@
 Examples('file based loader',
-  Given(Settings('module_path' => Directory(
+  Let('module_path', Directory(
     'mod' => {
       'functions' => {
         'myfunc.pp' => @(END)
           function mod::myfunc(String $arg) {
             "$arg from myfunc"
           }
-          |-END
+          |END
         },
+
+      'tasks' => {
+        'generic' => '# does nothing',
+
+        'init' => '# does nothing',
+        'init.json' => @(JSON),
+          {
+            "parameters": {
+              "txt": {
+                "type": "Optional[String]"
+              }
+            }
+          }
+          |JSON
+
+        'with_meta' => '# does nothing',
+        'with_meta.json' => @(JSON),
+          {
+            "parameters": {
+              "message": {
+                "type": "String",
+                "description": "the message",
+                "sensitive": false
+              },
+              "font": {
+                "type": "Optional[String]"
+              }
+            }
+          }
+          |JSON
+
+        'non_data' => '# does nothing',
+        'non_data.json' => @(JSON),
+          {
+            "parameters": {
+              "arg": {
+                "type": "Hash",
+                "description": "the non data param"
+              }
+            }
+          }
+          |JSON
+
+        'empty_params' => '# does nothing',
+        'empty_params.json' => '{ "parameters": {} }',
+
+        'no_params' => '# does nothing',
+        'no_params.json' => '{}',
+        },
+
       'types' => {
         'myalias.pp' => 'type Mod::Myalias = Integer[0, 127]',
         'mytype.pp' => @(END)
           type Mod::Mytype = {
             attributes => { 'a' => Integer }
           }
-          |-END
+          |END
         },
     }
-  ))),
+  )),
+
+  Given(Settings('module_path' => Get('module_path'))),
 
   Example('loads a function in a module',
     Given(@(SRC)),
@@ -36,4 +88,178 @@ Examples('file based loader',
       String(Mod::Mytype(23))
       |-SRC
     Evaluates_to(`Mod::Mytype('a' => 23)`)),
+
+  Examples('can load task',
+    Example('with no metadata',
+      Given(@(SRC)),
+        $t = load_task('mod::generic')
+        [String($t), String(type($t))]
+        |-SRC
+      Evaluates_to([
+        Quote(`Task('name' => 'mod::generic', 'executable' => '$module_path/mod/tasks/generic')`),
+        `Task`
+      ])),
+
+    Example('with metadata',
+      Given(@(SRC)),
+        String(load_task('mod::with_meta'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod::with_meta', 'executable' => '$module_path/mod/tasks/with_meta', 'parameters' => {'font' => {'type' => Optional[String]}, 'message' => {'description' => 'the message', 'sensitive' => false, 'type' => String}})`))),
+
+    Example('with non-Data parameter',
+      Given(@(SRC)),
+        String(load_task('mod::non_data'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod::non_data', 'executable' => '$module_path/mod/tasks/non_data', 'parameters' => {'arg' => {'description' => 'the non data param', 'type' => Hash}})`))),
+
+    Example('with no parameters',
+      Given(@(SRC)),
+        String(load_task('mod::no_params'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod::no_params', 'executable' => '$module_path/mod/tasks/no_params')`))),
+
+    Example('with empty parameters',
+      Given(@(SRC)),
+        String(load_task('mod::empty_params'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod::empty_params', 'executable' => '$module_path/mod/tasks/empty_params', 'parameters' => {})`))),
+
+    Example('with module name',
+      Given(@(SRC)),
+        String(load_task('mod'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod', 'executable' => '$module_path/mod/tasks/init', 'parameters' => {'txt' => {'type' => Optional[String]}})`))),
+
+    Example('with adjacent directory for init task',
+      Let('module_path', Directory(
+        'mod' => {
+          'tasks' => {
+            'init' => {
+              'foo.sh' => 'echo hello'
+            },
+            'init.sh' => 'echo hello',
+            'init.json' => @(JSON),
+            {
+              "parameters": {
+                 "txt": { "type": "String" }
+              }
+            }
+            |JSON
+          }
+        })),
+
+      Given(@(SRC)),
+        String(load_task('mod'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod', 'executable' => '$module_path/mod/tasks/init.sh', 'parameters' => {'txt' => {'type' => String}})`))),
+
+    Example('with adjacent directory for named task',
+      Let('module_path', Directory(
+        'mod' => {
+          'tasks' => {
+            'hello' => {
+              'foo.sh' => 'echo hello'
+            },
+            'hello.sh' => 'echo hello',
+            'hello.json' => @(JSON),
+            {
+              "parameters": {
+                 "txt": { "type": "String" }
+              }
+            }
+            |JSON
+          }
+        })),
+
+      Given(@(SRC)),
+        String(load_task('mod::hello'))
+        |-SRC
+      Evaluates_to(Quote(
+        `Task('name' => 'mod::hello', 'executable' => '$module_path/mod/tasks/hello.sh', 'parameters' => {'txt' => {'type' => String}})`))),
+
+    Example('using more than two segments in the name',
+      Let('module_path', Directory(
+        'mod' => {
+          'tasks' => {
+            'hello' => {
+              'foo.sh' => 'echo hello'
+            }
+          }
+        })),
+
+      Given(@(SRC)),
+        String(load_task('mod::hello::foo'))
+        |-SRC
+      Evaluates_with(EVAL_UNKNOWN_TASK)),
+
+    Example('that has a malformed top-level entry',
+      Let('module_path', Directory(
+        'mod' => {
+          'tasks' => {
+            'hello' => 'echo hello',
+            'hello.json' => @(JSON),
+            {
+              "supports_nop": true,
+              "parameters": {
+                 "message": { "type": "String" }
+              }
+            }
+            |JSON
+          }
+        })),
+
+      Given(@(SRC)),
+        String(load_task('mod::hello'))
+        |-SRC
+      Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`unrecognized key 'supports_nop'`)))),
+
+    Example('that has a malformed parameter name',
+      Let('module_path', Directory(
+        'mod' => {
+          'tasks' => {
+            'hello' => 'echo hello',
+            'hello.json' => @(JSON),
+            {
+              "supports_noop": true,
+              "parameters": {
+                 "Message": { "type": "String" }
+              }
+            }
+            |JSON
+          }
+        })),
+
+      Given(@(SRC)),
+        String(load_task('mod::hello'))
+        |-SRC
+      Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`key of entry 'Message' expects a match for Pattern[/\\A[a-z][a-z0-9_]*\\z/]`)))),
+
+    Example('that has a puppet_task_version that is a string',
+      Let('module_path', Directory(
+        'mod' => {
+          'tasks' => {
+            'hello' => 'echo hello',
+            'hello.json' => @(JSON),
+            {
+              "puppet_task_version": "1",
+              "supports_noop": true,
+              "parameters": {
+                 "message": { "type": "String" }
+              }
+            }
+            |JSON
+          }
+        })),
+
+      Given(@(SRC)),
+        String(load_task('mod::hello'))
+        |-SRC
+      Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`'puppet_task_version' expects an Integer value, got String`)))),
+  ),
 )

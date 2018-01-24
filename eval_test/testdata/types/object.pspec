@@ -1,4 +1,4 @@
-Examples('the Object type',
+Examples('Object type',
   Examples('can be declared',
     Example('using keyword Object and bracketed parameter list with hash',
       Given(@(SRC)),
