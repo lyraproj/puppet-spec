@@ -3,7 +3,6 @@ package pspec
 import (
 	. "github.com/puppetlabs/go-evaluator/eval"
 	. "github.com/puppetlabs/go-evaluator/evaluator"
-	. "github.com/puppetlabs/go-evaluator/pcore"
 	. "github.com/puppetlabs/go-evaluator/types"
 	. "github.com/puppetlabs/go-parser/issue"
 	. "github.com/puppetlabs/go-parser/parser"
@@ -153,7 +152,7 @@ func (v *TestGroup) Tests() []Test {
 }
 
 func parseAndValidate(name, source string, singleExpression bool) (Expression, []*ReportedIssue) {
-	expr, err := CreateParser().Parse(name, source, false, singleExpression)
+	expr, err := CreateParser().Parse(name, source, singleExpression)
 	var issues []*ReportedIssue
 	if err != nil {
 		issue, ok := err.(*ReportedIssue)

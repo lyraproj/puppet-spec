@@ -144,7 +144,7 @@ func (q *QuoteValue) Get(tc *TestContext) PValue {
 		panic(Error(PSPEC_QUOTE_NOT_STRING, issue.NO_ARGS))
 	}
 
-	ex, err := parser.CreateParser().Parse(``, `"`+text.String()+`"`, false, true)
+	ex, err := parser.CreateParser().Parse(``, `"`+text.String()+`"`, true)
 	if err != nil {
 		panic(err)
 	}

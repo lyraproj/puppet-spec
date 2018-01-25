@@ -78,7 +78,7 @@ func parseTestContents(t *testing.T, path string) Expression {
 		t.Fatal(err)
 	}
 
-	expr, err := CreatePspecParser().Parse(path, string(content), false, false)
+	expr, err := CreatePspecParser().Parse(path, string(content), false)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

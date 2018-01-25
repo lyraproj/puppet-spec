@@ -1,14 +1,6 @@
-Examples('file based loader',
+Examples('tasks are loaded',
   Let('module_path', Directory(
     'mod' => {
-      'functions' => {
-        'myfunc.pp' => @(END)
-          function mod::myfunc(String $arg) {
-            "$arg from myfunc"
-          }
-          |END
-        },
-
       'tasks' => {
         'generic' => '# does nothing',
 
@@ -57,39 +49,12 @@ Examples('file based loader',
         'no_params' => '# does nothing',
         'no_params.json' => '{}',
         },
-
-      'types' => {
-        'myalias.pp' => 'type Mod::Myalias = Integer[0, 127]',
-        'mytype.pp' => @(END)
-          type Mod::Mytype = {
-            attributes => { 'a' => Integer }
-          }
-          |END
-        },
     }
   )),
 
   Given(Settings('module_path' => Get('module_path'))),
 
-  Example('loads a function in a module',
-    Given(@(SRC)),
-      mod::myfunc('hello')
-      |-SRC
-    Evaluates_to('hello from myfunc')),
-
-  Example('loads a type alias in a module',
-    Given(@(SRC)),
-      String(Mod::Myalias)
-      |-SRC
-    Evaluates_to('Mod::Myalias')),
-
-  Example('loads an object type in a module',
-    Given(@(SRC)),
-      String(Mod::Mytype(23))
-      |-SRC
-    Evaluates_to(`Mod::Mytype('a' => 23)`)),
-
-  Examples('can load task',
+  Examples('are loaded',
     Example('with no metadata',
       Given(@(SRC)),
         $t = load_task('mod::generic')
@@ -182,8 +147,10 @@ Examples('file based loader',
         |-SRC
       Evaluates_to(Quote(
         `Task('name' => 'mod::hello', 'executable' => '$module_path/mod/tasks/hello.sh', 'parameters' => {'txt' => {'type' => String}})`))),
+  ),
 
-    Example('using more than two segments in the name',
+  Examples('fails to load when',
+    Example('more than two segments are in the name',
       Let('module_path', Directory(
         'mod' => {
           'tasks' => {
@@ -198,7 +165,7 @@ Examples('file based loader',
         |-SRC
       Evaluates_with(EVAL_UNKNOWN_TASK)),
 
-    Example('that has a malformed top-level entry',
+    Example('metadata has a malformed top-level entry',
       Let('module_path', Directory(
         'mod' => {
           'tasks' => {
@@ -219,7 +186,7 @@ Examples('file based loader',
         |-SRC
       Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`unrecognized key 'supports_nop'`)))),
 
-    Example('that has a malformed parameter name',
+    Example('metadata has a malformed parameter name',
       Let('module_path', Directory(
         'mod' => {
           'tasks' => {
@@ -240,7 +207,7 @@ Examples('file based loader',
         |-SRC
       Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`key of entry 'Message' expects a match for Pattern[/\\A[a-z][a-z0-9_]*\\z/]`)))),
 
-    Example('that has a puppet_task_version that is a string',
+    Example('metadata has a puppet_task_version that is a string',
       Let('module_path', Directory(
         'mod' => {
           'tasks' => {
