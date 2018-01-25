@@ -10,7 +10,6 @@ import (
 	. "github.com/puppetlabs/go-evaluator/evaluator"
 	. "github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
-	"github.com/puppetlabs/go-parser/parser"
 )
 
 type (
@@ -47,9 +46,10 @@ type (
 		content PValue
 	}
 
-	QuoteValue struct {
+	FormatValue struct {
 		lazyValue
-		text PValue
+		format    PValue
+		arguments []PValue
 	}
 
 	LazyScope struct {
@@ -82,7 +82,7 @@ func (lg *LazyValueGet) Get(tc *TestContext) PValue {
 }
 
 func (gv *GenericValue) Get(tc *TestContext) PValue {
-	return tc.resolveLazyValues(gv.content)
+	return tc.resolveLazyValue(gv.content)
 }
 
 func newDirectoryValue(content PValue) *DirectoryValue {
@@ -96,7 +96,7 @@ func (dv *DirectoryValue) Get(tc *TestContext) PValue {
 	if err != nil {
 		panic(err)
 	}
-	dir, ok := tc.resolveLazyValues(dv.content).(*HashValue)
+	dir, ok := tc.resolveLazyValue(dv.content).(*HashValue)
 	if !ok {
 		panic(Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`}))
 	}
@@ -122,7 +122,7 @@ func (dv *FileValue) Get(tc *TestContext) PValue {
 		panic(err)
 	}
 	path := tmpFile.Name()
-	writeFileValue(path, tc.resolveLazyValues(dv.content))
+	writeFileValue(path, tc.resolveLazyValue(dv.content))
 	tc.registerTearDown(func() {
 		err := os.Remove(path)
 		if err != nil {
@@ -132,30 +132,17 @@ func (dv *FileValue) Get(tc *TestContext) PValue {
 	return WrapString(path)
 }
 
-func newQuoteValue(text PValue) *QuoteValue {
-	d := &QuoteValue{text: text}
+func newFormatValue(format PValue, arguments []PValue) *FormatValue {
+	d := &FormatValue{format: format, arguments: arguments}
 	d.lazyValue.initialize()
 	return d
 }
 
-func (q *QuoteValue) Get(tc *TestContext) PValue {
-	text, ok := tc.resolveLazyValues(q.text).(*StringValue)
-	if !ok {
-		panic(Error(PSPEC_QUOTE_NOT_STRING, issue.NO_ARGS))
+func (q *FormatValue) Get(tc *TestContext) PValue {
+	if format, ok := tc.resolveLazyValue(q.format).(*StringValue); ok {
+		return WrapString(PuppetSprintf(format.String(), tc.resolveLazyValues(q.arguments)...))
 	}
-
-	ex, err := parser.CreateParser().Parse(``, `"`+text.String()+`"`, true)
-	if err != nil {
-		panic(err)
-	}
-
-	// Expressions within the concatenated string may be Get expressions and must
-	// be resolved while concatenating.
-	result, specErr := eval.NewEvaluator(tc.loader.(DefiningLoader), NewStdLogger()).Evaluate(ex, tc.newLazyScope(), tc.loader)
-	if specErr != nil {
-		panic(specErr)
-	}
-	return result
+	panic(Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
 }
 
 func (ls *LazyScope) Get(name string) (value PValue, found bool) {
@@ -215,11 +202,12 @@ func init() {
 			})
 		})
 
-	NewGoConstructor(`PSpec::Quote`,
+	NewGoConstructor(`PSpec::Format`,
 		func(d Dispatch) {
 			d.Param(`Any`)
+			d.RepeatedParam(`Any`)
 			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(newQuoteValue(args[0]))
+				return WrapRuntime(newFormatValue(args[0], args[1:]))
 			})
 		})
 

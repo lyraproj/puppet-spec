@@ -85,7 +85,7 @@ func (tc *TestContext) registerTearDown(td Housekeeping) {
 	tc.tearDowns = append(tc.tearDowns, td)
 }
 
-func (tc *TestContext) resolveLazyValues(v PValue) PValue {
+func (tc *TestContext) resolveLazyValue(v PValue) PValue {
 	switch v.(type) {
 	case *RuntimeValue:
 		if lv, ok := v.(*RuntimeValue).Interface().(LazyValue); ok {
@@ -99,19 +99,22 @@ func (tc *TestContext) resolveLazyValues(v PValue) PValue {
 		oe := v.(*HashValue).EntriesSlice()
 		ne := make([]*HashEntry, len(oe))
 		for i, e := range oe {
-			ne[i] = WrapHashEntry(tc.resolveLazyValues(e.Key()), tc.resolveLazyValues(e.Value()))
+			ne[i] = WrapHashEntry(tc.resolveLazyValue(e.Key()), tc.resolveLazyValue(e.Value()))
 		}
 		return WrapHash(ne)
 	case *ArrayValue:
-		oe := v.(*ArrayValue).Elements()
-		ne := make([]PValue, len(oe))
-		for i, e := range oe {
-			ne[i] = tc.resolveLazyValues(e)
-		}
-		return WrapArray(ne)
+		return WrapArray(tc.resolveLazyValues(v.(*ArrayValue).Elements()))
 	default:
 		return v
 	}
+}
+
+func (tc *TestContext) resolveLazyValues(values []PValue) []PValue {
+	resolved := make([]PValue, len(values))
+	for i, e := range values {
+		resolved[i] = tc.resolveLazyValue(e)
+	}
+	return resolved
 }
 
 func (v *testNode) Name() string {

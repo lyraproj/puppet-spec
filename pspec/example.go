@@ -101,7 +101,7 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 		failOnError(assertions, issues)
 		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
 		failOnError(assertions, evalIssues)
-		assertions.AssertEquals(context.resolveLazyValues(e.expected), actualResult)
+		assertions.AssertEquals(context.resolveLazyValue(e.expected), actualResult)
 	}
 }
 
@@ -201,7 +201,7 @@ func (p *ParseResult) setExample(example *Example) {
 func (s *SettingsInput) CreateTests(expected Result) []Executable {
 	// Settings input does not create any tests
 	return []Executable{func(tc *TestContext, assertions Assertions) {
-		settings, ok := tc.resolveLazyValues(s.settings).(*HashValue)
+		settings, ok := tc.resolveLazyValue(s.settings).(*HashValue)
 		if !ok {
 			Error(PSPEC_VALUE_NOT_HASH, H{`type`: `Settings`})
 		}
@@ -214,7 +214,7 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 
 func (s *ScopeInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
-		scope, ok := tc.resolveLazyValues(s.scope).(*HashValue)
+		scope, ok := tc.resolveLazyValue(s.scope).(*HashValue)
 		if !ok {
 			Error(PSPEC_VALUE_NOT_HASH, H{`type`: `Scope`})
 		}
