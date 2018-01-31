@@ -78,7 +78,15 @@ func (e *Expectation) MatchEntries(b *bytes.Buffer, log *ArrayLogger, issues []*
 				excludes = append(excludes, le.excludes...)
 			}
 		}
-		matchEntries(b, level, includes, excludes, entries, issues)
+		texts := make([]string, 0)
+		for _, entry := range entries {
+			if re, ok := entry.(*ReportedEntry); ok {
+				issues = append(issues, re.Issue())
+			} else {
+				texts = append(texts, entry.Message())
+			}
+		}
+		matchEntries(b, level, includes, excludes, texts, issues)
 	}
 }
 

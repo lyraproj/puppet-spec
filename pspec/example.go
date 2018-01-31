@@ -40,7 +40,7 @@ type (
 
 	Example struct {
 		node
-		result    Result
+		results   []Result
 		evaluator Evaluator
 	}
 
@@ -121,8 +121,8 @@ func (n *node) addLetDefs(lazyValueLets []*LazyValueLet) {
 	}
 }
 
-func newExample(description string, given *Given, result Result) *Example {
-	e := &Example{result: result}
+func newExample(description string, given *Given, results []Result) *Example {
+	e := &Example{results: results}
 	e.node.initialize(description, given)
 	return e
 }
@@ -149,7 +149,9 @@ func (e *Example) CreateTest() Test {
 	test := func(context *TestContext, assertions Assertions) {
 		tests := make([]Executable, 0, 8)
 		for _, input := range e.collectInputs(context, make([]Input, 0, 8)) {
-			tests = append(tests, input.CreateTests(e.result)...)
+			for _, result := range e.results {
+				tests = append(tests, input.CreateTests(result)...)
+			}
 		}
 		for _, test := range tests {
 			test(context, assertions)
@@ -251,7 +253,7 @@ func init() {
 			d.Function(func(c EvalContext, args []PValue) PValue {
 				lets := make([]*LazyValueLet, 0)
 				var given *Given
-				var result Result
+				results := make([]Result, 0)
 				for _, arg := range args[1:] {
 					if rt, ok := arg.(*RuntimeValue); ok {
 						i := rt.Interface()
@@ -264,13 +266,15 @@ func init() {
 							}
 							given = i.(*Given)
 						case Result:
-							result = i.(Result)
+							results = append(results, i.(Result))
 						}
 					}
 				}
-				example := newExample(args[0].String(), given, result)
+				example := newExample(args[0].String(), given, results)
 				example.addLetDefs(lets)
-				result.setExample(example)
+				for _, result := range results {
+					result.setExample(example)
+				}
 				return WrapRuntime(example)
 			})
 		})
