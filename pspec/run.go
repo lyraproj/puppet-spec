@@ -2,32 +2,31 @@ package pspec
 
 import (
 	"io/ioutil"
-	"sync"
-	"testing"
-
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"testing"
 
-	. "github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/impl"
+	"github.com/puppetlabs/go-evaluator/eval"
+	"github.com/puppetlabs/go-evaluator/impl"
 	"github.com/puppetlabs/go-evaluator/pcore"
-	. "github.com/puppetlabs/go-parser/parser"
+	"github.com/puppetlabs/go-parser/parser"
 )
 
-var baseLoader DefiningLoader
+var baseLoader eval.DefiningLoader
 var baseLoaderLock sync.Mutex
 
 func RunPspecTests(t *testing.T, testRoot string) {
 	t.Helper()
 	baseLoaderLock.Lock()
-	logger := NewStdLogger()
+	logger := eval.NewStdLogger()
 	if baseLoader == nil {
-		baseLoader = NewParentedLoader(pcore.NewPcore(logger).SystemLoader())
-		ResolveResolvables(baseLoader, logger)
+		baseLoader = eval.NewParentedLoader(pcore.NewPcore(logger).SystemLoader())
+		impl.ResolveResolvables(baseLoader, logger)
 	}
 	baseLoaderLock.Unlock()
-	loader := NewParentedLoader(baseLoader)
+	loader := eval.NewParentedLoader(baseLoader)
 
 	testFiles := make([]string, 0, 64)
 	err := filepath.Walk(testRoot, func(path string, info os.FileInfo, err error) error {
@@ -49,14 +48,14 @@ func RunPspecTests(t *testing.T, testRoot string) {
 	runTests(t, loader, tests, nil)
 }
 
-func runTests(t *testing.T, loader Loader, tests []Test, parentContext *TestContext) {
+func runTests(t *testing.T, loader eval.Loader, tests []Test, parentContext *TestContext) {
 	t.Helper()
 
 	for _, test := range tests {
 		ctx := &TestContext{
 			parent:         parentContext,
 			tearDowns:      make([]Housekeeping, 0),
-			accessedValues: make(map[int64]PValue, 32),
+			accessedValues: make(map[int64]eval.PValue, 32),
 			node:           test.Node(),
 			loader:         loader}
 
@@ -72,13 +71,13 @@ func runTests(t *testing.T, loader Loader, tests []Test, parentContext *TestCont
 	}
 }
 
-func parseTestContents(t *testing.T, path string) Expression {
+func parseTestContents(t *testing.T, path string) parser.Expression {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expr, err := CreatePspecParser().Parse(path, string(content), false)
+	expr, err := parser.CreatePspecParser().Parse(path, string(content), false)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -95,7 +94,7 @@ func (a *assertions) Fail(message string) {
 }
 
 func (a *assertions) AssertEquals(expected interface{}, actual interface{}) {
-	if !Equals(expected, actual) {
+	if !eval.Equals(expected, actual) {
 		a.t.Errorf("expected %T '%v', got %T '%v'\n", expected, expected, actual, actual)
 	}
 }
