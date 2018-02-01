@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	"github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/evaluator"
+	. "github.com/puppetlabs/go-evaluator/eval"
+	"github.com/puppetlabs/go-evaluator/impl"
 	. "github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
 )
@@ -53,7 +53,7 @@ type (
 	}
 
 	LazyScope struct {
-		eval.BasicScope
+		impl.BasicScope
 		ctx *TestContext
 	}
 )
@@ -140,7 +140,7 @@ func newFormatValue(format PValue, arguments []PValue) *FormatValue {
 
 func (q *FormatValue) Get(tc *TestContext) PValue {
 	if format, ok := tc.resolveLazyValue(q.format).(*StringValue); ok {
-		return WrapString(PuppetSprintf(format.String(), tc.resolveLazyValues(q.arguments)...))
+		return WrapString(PuppetSprintf(format.String(), tc.resolveLazyValues(WrapArray(q.arguments))...))
 	}
 	panic(Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
 }
@@ -154,10 +154,9 @@ func (ls *LazyScope) Get(name string) (value PValue, found bool) {
 }
 
 func makeDirectories(parent string, hash *HashValue) {
-	for _, e := range hash.EntriesSlice() {
-		name := e.Key().String()
+	hash.EachPair(func(key, value PValue) {
+		name := key.String()
 		path := filepath.Join(parent, name)
-		value := e.Value()
 		if dir, ok := value.(*HashValue); ok {
 			err := os.Mkdir(path, 0755)
 			if err != nil {
@@ -167,7 +166,7 @@ func makeDirectories(parent string, hash *HashValue) {
 		} else {
 			writeFileValue(path, value)
 		}
-	}
+	})
 }
 
 func writeFileValue(path string, value PValue) {

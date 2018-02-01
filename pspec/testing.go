@@ -2,7 +2,7 @@ package pspec
 
 import (
 	. "github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/evaluator"
+	. "github.com/puppetlabs/go-evaluator/impl"
 	. "github.com/puppetlabs/go-evaluator/types"
 	. "github.com/puppetlabs/go-parser/issue"
 	. "github.com/puppetlabs/go-parser/parser"
@@ -96,24 +96,25 @@ func (tc *TestContext) resolveLazyValue(v PValue) PValue {
 		}
 		return v
 	case *HashValue:
-		oe := v.(*HashValue).EntriesSlice()
-		ne := make([]*HashEntry, len(oe))
-		for i, e := range oe {
+		oe := v.(*HashValue)
+		ne := make([]*HashEntry, oe.Len())
+		oe.EachWithIndex(func(v PValue, i int) {
+			e := v.(*HashEntry)
 			ne[i] = WrapHashEntry(tc.resolveLazyValue(e.Key()), tc.resolveLazyValue(e.Value()))
-		}
+		})
 		return WrapHash(ne)
 	case *ArrayValue:
-		return WrapArray(tc.resolveLazyValues(v.(*ArrayValue).Elements()))
+		return WrapArray(tc.resolveLazyValues(v.(*ArrayValue)))
 	default:
 		return v
 	}
 }
 
-func (tc *TestContext) resolveLazyValues(values []PValue) []PValue {
-	resolved := make([]PValue, len(values))
-	for i, e := range values {
+func (tc *TestContext) resolveLazyValues(values IndexedValue) []PValue {
+	resolved := make([]PValue, values.Len())
+	values.EachWithIndex(func(e PValue, i int) {
 		resolved[i] = tc.resolveLazyValue(e)
-	}
+	})
 	return resolved
 }
 

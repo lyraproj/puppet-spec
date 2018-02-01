@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/evaluator"
+	. "github.com/puppetlabs/go-evaluator/impl"
 	. "github.com/puppetlabs/go-evaluator/types"
 	. "github.com/puppetlabs/go-parser/issue"
 	. "github.com/puppetlabs/go-pspec/testutils"
@@ -208,9 +208,9 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 			Error(PSPEC_VALUE_NOT_HASH, H{`type`: `Settings`})
 		}
 		p := Puppet
-		for _, e := range settings.EntriesSlice() {
-			p.Set(e.Key().String(), e.Value())
-		}
+		settings.EachPair(func(key, value PValue) {
+			p.Set(key.String(), value)
+		})
 	}}
 }
 
@@ -306,7 +306,7 @@ func init() {
 					}
 					others = append(others, arg)
 				}
-				ex := newExamples(args[0].String(), given, splatNodes(others))
+				ex := newExamples(args[0].String(), given, splatNodes(WrapArray(others)))
 				ex.addLetDefs(lets)
 				return WrapRuntime(ex)
 			})
@@ -377,14 +377,14 @@ func init() {
 		})
 }
 
-func splatNodes(args []PValue) []Node {
+func splatNodes(args IndexedValue) []Node {
 	nodes := make([]Node, 0)
-	for _, arg := range args {
+	args.Each(func(arg PValue) {
 		if rv, ok := arg.(*RuntimeValue); ok {
 			nodes = append(nodes, rv.Interface().(Node))
 		} else {
-			nodes = append(nodes, splatNodes(arg.(*ArrayValue).Elements())...)
+			nodes = append(nodes, splatNodes(arg.(*ArrayValue))...)
 		}
-	}
+	})
 	return nodes
 }
