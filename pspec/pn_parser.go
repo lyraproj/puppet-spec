@@ -1,39 +1,39 @@
 package pspec
 
 import (
-	. "github.com/puppetlabs/go-parser/parser"
-	. "github.com/puppetlabs/go-parser/pn"
+	"github.com/puppetlabs/go-parser/parser"
+	"github.com/puppetlabs/go-parser/pn"
 )
 
-func ParsePN(file string, content string) PN {
-	lexer := NewSimpleLexer(file, content)
+func ParsePN(file string, content string) pn.PN {
+	lexer := parser.NewSimpleLexer(file, content)
 	lexer.NextToken()
 	return parseNext(lexer)
 }
 
-func parseNext(lexer Lexer) PN {
+func parseNext(lexer parser.Lexer) pn.PN {
 	switch lexer.CurrentToken() {
-	case TOKEN_LB, TOKEN_LISTSTART:
+	case parser.TOKEN_LB, parser.TOKEN_LISTSTART:
 		return parseArray(lexer)
-	case TOKEN_LC, TOKEN_SELC:
+	case parser.TOKEN_LC, parser.TOKEN_SELC:
 		return parseMap(lexer)
-	case TOKEN_LP, TOKEN_WSLP:
+	case parser.TOKEN_LP, parser.TOKEN_WSLP:
 		return parseCall(lexer)
-	case TOKEN_STRING, TOKEN_BOOLEAN, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_UNDEF:
+	case parser.TOKEN_STRING, parser.TOKEN_BOOLEAN, parser.TOKEN_INTEGER, parser.TOKEN_FLOAT, parser.TOKEN_UNDEF:
 		return parseLiteral(lexer)
-	case TOKEN_IDENTIFIER:
+	case parser.TOKEN_IDENTIFIER:
 		switch lexer.TokenValue() {
 		case `null`:
-			return LiteralPN(nil)
+			return pn.Literal(nil)
 		default:
 			lexer.SyntaxError()
 		}
-	case TOKEN_SUBTRACT:
+	case parser.TOKEN_SUBTRACT:
 		switch lexer.NextToken() {
-		case TOKEN_FLOAT:
-			return LiteralPN(-lexer.TokenValue().(float64))
-		case TOKEN_INTEGER:
-			return LiteralPN(-lexer.TokenValue().(int64))
+		case parser.TOKEN_FLOAT:
+			return pn.Literal(-lexer.TokenValue().(float64))
+		case parser.TOKEN_INTEGER:
+			return pn.Literal(-lexer.TokenValue().(int64))
 		default:
 			lexer.SyntaxError()
 		}
@@ -43,51 +43,51 @@ func parseNext(lexer Lexer) PN {
 	return nil
 }
 
-func parseArray(lexer Lexer) PN {
-	return ListPN(parseElements(lexer, TOKEN_RB))
+func parseArray(lexer parser.Lexer) pn.PN {
+	return pn.List(parseElements(lexer, parser.TOKEN_RB))
 }
 
-func parseMap(lexer Lexer) PN {
-	entries := make([]Entry, 0, 8)
+func parseMap(lexer parser.Lexer) pn.PN {
+	entries := make([]pn.Entry, 0, 8)
 	token := lexer.NextToken()
-	for token != TOKEN_RC && token != TOKEN_END {
-		lexer.AssertToken(TOKEN_COLON)
+	for token != parser.TOKEN_RC && token != parser.TOKEN_END {
+		lexer.AssertToken(parser.TOKEN_COLON)
 		lexer.NextToken()
 		key := parseIdentifier(lexer)
 		entries = append(entries, parseNext(lexer).WithName(key))
 		token = lexer.CurrentToken()
 	}
-	lexer.AssertToken(TOKEN_RC)
+	lexer.AssertToken(parser.TOKEN_RC)
 	lexer.NextToken()
-	return MapPN(entries)
+	return pn.Map(entries)
 }
 
-func parseCall(lexer Lexer) PN {
+func parseCall(lexer parser.Lexer) pn.PN {
 	lexer.NextToken()
 	name := parseIdentifier(lexer)
-	elements := parseElements(lexer, TOKEN_RP)
-	return CallPN(name, elements...)
+	elements := parseElements(lexer, parser.TOKEN_RP)
+	return pn.Call(name, elements...)
 }
 
-func parseLiteral(lexer Lexer) PN {
-	pn := LiteralPN(lexer.TokenValue())
+func parseLiteral(lexer parser.Lexer) pn.PN {
+	pn := pn.Literal(lexer.TokenValue())
 	lexer.NextToken()
 	return pn
 }
 
-func parseIdentifier(lexer Lexer) string {
+func parseIdentifier(lexer parser.Lexer) string {
 	switch lexer.CurrentToken() {
-	case TOKEN_END,
-		TOKEN_LP, TOKEN_WSLP, TOKEN_RP,
-		TOKEN_LB, TOKEN_LISTSTART, TOKEN_RB,
-		TOKEN_LC, TOKEN_SELC, TOKEN_RC,
-		TOKEN_EPP_END, TOKEN_EPP_END_TRIM, TOKEN_RENDER_EXPR, TOKEN_RENDER_STRING,
-		TOKEN_COMMA, TOKEN_COLON, TOKEN_SEMICOLON,
-		TOKEN_STRING, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_CONCATENATED_STRING, TOKEN_HEREDOC,
-		TOKEN_REGEXP:
+	case parser.TOKEN_END,
+		parser.TOKEN_LP, parser.TOKEN_WSLP, parser.TOKEN_RP,
+		parser.TOKEN_LB, parser.TOKEN_LISTSTART, parser.TOKEN_RB,
+		parser.TOKEN_LC, parser.TOKEN_SELC, parser.TOKEN_RC,
+		parser.TOKEN_EPP_END, parser.TOKEN_EPP_END_TRIM, parser.TOKEN_RENDER_EXPR, parser.TOKEN_RENDER_STRING,
+		parser.TOKEN_COMMA, parser.TOKEN_COLON, parser.TOKEN_SEMICOLON,
+		parser.TOKEN_STRING, parser.TOKEN_INTEGER, parser.TOKEN_FLOAT, parser.TOKEN_CONCATENATED_STRING, parser.TOKEN_HEREDOC,
+		parser.TOKEN_REGEXP:
 		lexer.SyntaxError()
 		return ``
-	case TOKEN_DEFAULT:
+	case parser.TOKEN_DEFAULT:
 		lexer.NextToken()
 		return `default`
 	default:
@@ -97,10 +97,10 @@ func parseIdentifier(lexer Lexer) string {
 	}
 }
 
-func parseElements(lexer Lexer, endToken int) []PN {
-	elements := make([]PN, 0, 8)
+func parseElements(lexer parser.Lexer, endToken int) []pn.PN {
+	elements := make([]pn.PN, 0, 8)
 	token := lexer.CurrentToken()
-	for token != endToken && token != TOKEN_END {
+	for token != endToken && token != parser.TOKEN_END {
 		elements = append(elements, parseNext(lexer))
 		token = lexer.CurrentToken()
 	}

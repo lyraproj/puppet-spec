@@ -2,16 +2,15 @@ package pspec
 
 import (
 	"bytes"
-	. "fmt"
+	"fmt"
 	"regexp"
-
 	"strings"
 
-	. "github.com/puppetlabs/go-evaluator/eval"
+	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/hash"
-	. "github.com/puppetlabs/go-evaluator/types"
+	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-evaluator/utils"
-	. "github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-parser/issue"
 )
 
 type (
@@ -20,14 +19,14 @@ type (
 	}
 
 	LevelExpectation struct {
-		level    LogLevel
+		level    eval.LogLevel
 		includes []*Include
 		excludes []*Exclude
 	}
 
 	Match interface {
 		MatchString(str string) bool
-		MatchIssue(issue *ReportedIssue) bool
+		MatchIssue(issue *issue.Reported) bool
 		String() string
 	}
 
@@ -40,7 +39,7 @@ type (
 	}
 
 	IssueMatch struct {
-		issue   *Issue
+		issue   *issue.Issue
 		argsMap *hash.StringHash
 	}
 
@@ -66,8 +65,8 @@ type (
 
 var EXPECT_OK = &Expectation{levelExpectations: []*LevelExpectation{}}
 
-func (e *Expectation) MatchEntries(b *bytes.Buffer, log *ArrayLogger, issues []*ReportedIssue) {
-	for _, level := range []LogLevel{NOTICE, WARNING, ERR} {
+func (e *Expectation) MatchEntries(b *bytes.Buffer, log *eval.ArrayLogger, issues []*issue.Reported) {
+	for _, level := range []eval.LogLevel{eval.NOTICE, eval.WARNING, eval.ERR} {
 		entries := log.Entries(level)
 		issues := issuesForLevel(issues, level)
 		includes := make([]*Include, 0)
@@ -80,7 +79,7 @@ func (e *Expectation) MatchEntries(b *bytes.Buffer, log *ArrayLogger, issues []*
 		}
 		texts := make([]string, 0)
 		for _, entry := range entries {
-			if re, ok := entry.(*ReportedEntry); ok {
+			if re, ok := entry.(*eval.ReportedEntry); ok {
 				issues = append(issues, re.Issue())
 			} else {
 				texts = append(texts, entry.Message())
@@ -90,10 +89,10 @@ func (e *Expectation) MatchEntries(b *bytes.Buffer, log *ArrayLogger, issues []*
 	}
 }
 
-func issuesForLevel(issues []*ReportedIssue, level LogLevel) []*ReportedIssue {
-	levelIssues := make([]*ReportedIssue, 0)
+func issuesForLevel(issues []*issue.Reported, level eval.LogLevel) []*issue.Reported {
+	levelIssues := make([]*issue.Reported, 0)
 	severity := level.Severity()
-	if severity != SEVERITY_IGNORE {
+	if severity != issue.SEVERITY_IGNORE {
 		for _, issue := range issues {
 			if severity == issue.Severity() {
 				levelIssues = append(levelIssues, issue)
@@ -103,7 +102,7 @@ func issuesForLevel(issues []*ReportedIssue, level LogLevel) []*ReportedIssue {
 	return levelIssues
 }
 
-func matchEntries(b *bytes.Buffer, level LogLevel, includes []*Include, excludes []*Exclude, entries []string, issues []*ReportedIssue) {
+func matchEntries(b *bytes.Buffer, level eval.LogLevel, includes []*Include, excludes []*Exclude, entries []string, issues []*issue.Reported) {
 nextStr:
 	for _, str := range entries {
 		for _, i := range includes {
@@ -118,7 +117,7 @@ nextStr:
 			}
 		}
 		if !excluded {
-			Fprintf(b, "Unexpected %s('%s')\n", level, str)
+			fmt.Fprintf(b, "Unexpected %s('%s')\n", level, str)
 		}
 	}
 
@@ -136,7 +135,7 @@ nextIssue:
 			}
 		}
 		if !excluded {
-			Fprintf(b, "Unexpected %s: %s\n", issue.Code(), issue.String())
+			fmt.Fprintf(b, "Unexpected %s: %s\n", issue.Code(), issue.String())
 		}
 	}
 
@@ -154,7 +153,7 @@ func (i *Include) matchEntry(str string) bool {
 	return false
 }
 
-func (i *Include) matchIssue(issue *ReportedIssue) bool {
+func (i *Include) matchIssue(issue *issue.Reported) bool {
 	for _, m := range i.matchers {
 		if m.MatchIssue(issue) {
 			return true
@@ -163,7 +162,7 @@ func (i *Include) matchIssue(issue *ReportedIssue) bool {
 	return false
 }
 
-func (i *Include) matchExpectedIncludes(b *bytes.Buffer, level LogLevel, strings []string, issues []*ReportedIssue) {
+func (i *Include) matchExpectedIncludes(b *bytes.Buffer, level eval.LogLevel, strings []string, issues []*issue.Reported) {
 nextMatch:
 	for _, m := range i.matchers {
 		for _, str := range strings {
@@ -176,25 +175,25 @@ nextMatch:
 				continue nextMatch
 			}
 		}
-		Fprintf(b, "Expected %s(%s) but it was not produced\n", level, m.String())
+		fmt.Fprintf(b, "Expected %s(%s) but it was not produced\n", level, m.String())
 	}
 }
 
-func (e *Exclude) matchLogEntry(b *bytes.Buffer, level LogLevel, str string) bool {
+func (e *Exclude) matchLogEntry(b *bytes.Buffer, level eval.LogLevel, str string) bool {
 	for _, m := range e.matchers {
 		if m.MatchString(str) {
-			Fprintf(b, "%s(%s) matches exclusion %s\n", level, str, m.String())
+			fmt.Fprintf(b, "%s(%s) matches exclusion %s\n", level, str, m.String())
 			return true
 		}
 	}
 	return false
 }
 
-func (e *Exclude) matchIssue(b *bytes.Buffer, issue *ReportedIssue) bool {
+func (e *Exclude) matchIssue(b *bytes.Buffer, issue *issue.Reported) bool {
 	excluded := false
 	for _, m := range e.matchers {
 		if m.MatchIssue(issue) {
-			Fprintf(b, "%s matches exclusion %s\n", issue.String(), m.String())
+			fmt.Fprintf(b, "%s matches exclusion %s\n", issue.String(), m.String())
 			excluded = true
 		}
 	}
@@ -205,7 +204,7 @@ func (im *IssueMatch) MatchString(str string) bool {
 	return string(im.issue.Code()) == str
 }
 
-func (im *IssueMatch) MatchIssue(issue *ReportedIssue) bool {
+func (im *IssueMatch) MatchIssue(issue *issue.Reported) bool {
 	if im.issue.Code() != issue.Code() {
 		return false
 	}
@@ -235,7 +234,7 @@ func (im *IssueMatch) MatchIssue(issue *ReportedIssue) bool {
 			}
 			return false
 		} else {
-			if !Equals(a, WrapUnknown(v)) {
+			if !eval.Equals(a, eval.WrapUnknown(v)) {
 				return false
 			}
 		}
@@ -251,7 +250,7 @@ func (rm *RegexpMatch) MatchString(str string) bool {
 	return rm.regexp.MatchString(str)
 }
 
-func (rm *RegexpMatch) MatchIssue(issue *ReportedIssue) bool {
+func (rm *RegexpMatch) MatchIssue(issue *issue.Reported) bool {
 	return rm.regexp.MatchString(issue.String())
 }
 
@@ -268,7 +267,7 @@ func (sm *StringMatch) MatchString(str string) bool {
 	return str == sm.text
 }
 
-func (sm *StringMatch) MatchIssue(issue *ReportedIssue) bool {
+func (sm *StringMatch) MatchIssue(issue *issue.Reported) bool {
 	if sm.partial {
 		return strings.Contains(issue.String(), sm.text)
 	}
@@ -282,68 +281,68 @@ func (sm *StringMatch) String() string {
 	return b.String()
 }
 
-var MATCH_TYPE = NewGoRuntimeType([]Match{})
-var ISSUE_TYPE = NewGoRuntimeType([]*Issue{})
-var INCLUDE_TYPE = NewGoRuntimeType([]*Include{})
-var EXCLUDE_TYPE = NewGoRuntimeType([]*Exclude{})
-var EXPECTATION_TYPE = NewGoRuntimeType([]*Expectation{})
-var MATCH_ARG_TYPE = NewVariantType([]PType{DefaultStringType(), DefaultRegexpType(), ISSUE_TYPE})
-var MATCHERS_TYPE = NewVariantType([]PType{DefaultStringType(), DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE})
-var EXPECTATIONS_TYPE = NewVariantType([]PType{DefaultStringType(), DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE, INCLUDE_TYPE, EXCLUDE_TYPE})
+var MATCH_TYPE = types.NewGoRuntimeType([]Match{})
+var ISSUE_TYPE = types.NewGoRuntimeType([]*issue.Issue{})
+var INCLUDE_TYPE = types.NewGoRuntimeType([]*Include{})
+var EXCLUDE_TYPE = types.NewGoRuntimeType([]*Exclude{})
+var EXPECTATION_TYPE = types.NewGoRuntimeType([]*Expectation{})
+var MATCH_ARG_TYPE = types.NewVariantType([]eval.PType{types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE})
+var MATCHERS_TYPE = types.NewVariantType([]eval.PType{types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE})
+var EXPECTATIONS_TYPE = types.NewVariantType([]eval.PType{types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE, INCLUDE_TYPE, EXCLUDE_TYPE})
 
-func makeMatches(name string, args []PValue) (result []Match) {
+func makeMatches(name string, args []eval.PValue) (result []Match) {
 	result = make([]Match, len(args))
 	for ix, arg := range args {
 		switch arg.(type) {
-		case *StringValue:
+		case *types.StringValue:
 			result[ix] = &StringMatch{false, arg.String()}
 			continue
-		case *RegexpValue:
-			result[ix] = &RegexpMatch{arg.(*RegexpValue).Regexp()}
+		case *types.RegexpValue:
+			result[ix] = &RegexpMatch{arg.(*types.RegexpValue).Regexp()}
 			continue
-		case *RuntimeValue:
-			x := arg.(*RuntimeValue).Interface()
+		case *types.RuntimeValue:
+			x := arg.(*types.RuntimeValue).Interface()
 			switch x.(type) {
-			case *Issue:
-				result[ix] = &IssueMatch{x.(*Issue), nil}
+			case *issue.Issue:
+				result[ix] = &IssueMatch{x.(*issue.Issue), nil}
 				continue
 			case Match:
 				result[ix] = x.(Match)
 				continue
 			}
 		}
-		panic(NewIllegalArgumentType2(name, ix, `Variant[String,Regexp,Issue,Match]`, arg))
+		panic(types.NewIllegalArgumentType2(name, ix, `Variant[String,Regexp,Issue,Match]`, arg))
 	}
 	return
 }
 
-func makeIssueArgMatch(arg PValue) interface{} {
+func makeIssueArgMatch(arg eval.PValue) interface{} {
 	switch arg.(type) {
-	case *StringValue:
+	case *types.StringValue:
 		return &StringMatch{false, arg.String()}
-	case *RegexpValue:
-		return &RegexpMatch{arg.(*RegexpValue).Regexp()}
-	case *RuntimeValue:
-		return arg.(*RuntimeValue).Interface()
+	case *types.RegexpValue:
+		return &RegexpMatch{arg.(*types.RegexpValue).Regexp()}
+	case *types.RuntimeValue:
+		return arg.(*types.RuntimeValue).Interface()
 	}
 	return arg
 }
 
-func makeExpectations(name string, level LogLevel, args []PValue) (result []*LevelExpectation) {
+func makeExpectations(name string, level eval.LogLevel, args []eval.PValue) (result []*LevelExpectation) {
 	result = make([]*LevelExpectation, len(args))
 	for ix, arg := range args {
 		switch arg.(type) {
-		case *StringValue:
+		case *types.StringValue:
 			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&StringMatch{false, arg.String()}}}}}
 			continue
-		case *RegexpValue:
-			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&RegexpMatch{arg.(*RegexpValue).Regexp()}}}}}
+		case *types.RegexpValue:
+			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&RegexpMatch{arg.(*types.RegexpValue).Regexp()}}}}}
 			continue
-		case *RuntimeValue:
-			x := arg.(*RuntimeValue).Interface()
+		case *types.RuntimeValue:
+			x := arg.(*types.RuntimeValue).Interface()
 			switch x.(type) {
-			case *Issue:
-				result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&IssueMatch{x.(*Issue), nil}}}}}
+			case *issue.Issue:
+				result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&IssueMatch{x.(*issue.Issue), nil}}}}}
 				continue
 			case *Include:
 				result[ix] = &LevelExpectation{level: level, includes: []*Include{x.(*Include)}}
@@ -356,7 +355,7 @@ func makeExpectations(name string, level LogLevel, args []PValue) (result []*Lev
 				continue
 			}
 		}
-		panic(NewIllegalArgumentType2(name, ix, `Variant[String,Regexp,Issue,Match,Include,Exclude]`, arg))
+		panic(types.NewIllegalArgumentType2(name, ix, `Variant[String,Regexp,Issue,Match,Include,Exclude]`, arg))
 	}
 	return
 }
@@ -370,7 +369,7 @@ func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
 			issues = append(issues, evalIssues...)
 		}
-		validateExpectations(assertions, e.expectations, issues, evaluator.Logger().(*ArrayLogger))
+		validateExpectations(assertions, e.expectations, issues, evaluator.Logger().(*eval.ArrayLogger))
 	}
 }
 
@@ -382,7 +381,7 @@ func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
 	path, source := pathAndContent(actual)
 	return func(tc *TestContext, assertions Assertions) {
 		_, issues := parseAndValidate(path, source, true)
-		validateExpectations(assertions, v.expectations, issues, NewArrayLogger())
+		validateExpectations(assertions, v.expectations, issues, eval.NewArrayLogger())
 	}
 }
 
@@ -390,7 +389,7 @@ func (v *ValidatesWith) setExample(example *Example) {
 	v.example = example
 }
 
-func validateExpectations(assertions Assertions, expectations []*Expectation, issues []*ReportedIssue, log *ArrayLogger) {
+func validateExpectations(assertions Assertions, expectations []*Expectation, issues []*issue.Reported, log *eval.ArrayLogger) {
 	bld := bytes.NewBufferString(``)
 	for _, ex := range expectations {
 		ex.MatchEntries(bld, log, issues)
@@ -402,145 +401,145 @@ func validateExpectations(assertions Assertions, expectations []*Expectation, is
 
 func init() {
 
-	NewGoConstructor(`PSpec::Exclude`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Exclude`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&Exclude{makeMatches(`Exclude`, args)})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&Exclude{makeMatches(`Exclude`, args)})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Include`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Include`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&Include{makeMatches(`Include`, args)})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&Include{makeMatches(`Include`, args)})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Contain`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Contain`,
+		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&StringMatch{true, args[0].String()})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&StringMatch{true, args[0].String()})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Issue`,
-		func(d Dispatch) {
-			d.Param2(NewGoRuntimeType([]*Issue{}))
+	eval.NewGoConstructor(`PSpec::Issue`,
+		func(d eval.Dispatch) {
+			d.Param2(types.NewGoRuntimeType([]*issue.Issue{}))
 			d.OptionalParam(`Hash[String,Any]`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				var argsMap *hash.StringHash
 				if len(args) > 1 {
 					argsMap = hash.NewStringHash(5)
-					args[1].(*HashValue).EachPair(func(k, v PValue) {
+					args[1].(*types.HashValue).EachPair(func(k, v eval.PValue) {
 						argsMap.Put(k.String(), makeIssueArgMatch(v))
 					})
 				}
-				return WrapRuntime(&IssueMatch{issue: args[0].(*RuntimeValue).Interface().(*Issue), argsMap: argsMap})
+				return types.WrapRuntime(&IssueMatch{issue: args[0].(*types.RuntimeValue).Interface().(*issue.Issue), argsMap: argsMap})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Match`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Match`,
+		func(d eval.Dispatch) {
 			d.Param2(MATCH_ARG_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(makeMatches(`Match`, args)[0])
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(makeMatches(`Match`, args)[0])
 			})
 		})
 
-	NewGoConstructor(`PSpec::Error`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Error`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&Expectation{makeExpectations(`Error`, ERR, args)})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&Expectation{makeExpectations(`Error`, eval.ERR, args)})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Notice`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Notice`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&Expectation{makeExpectations(`Notice`, NOTICE, args)})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&Expectation{makeExpectations(`Notice`, eval.NOTICE, args)})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Warning`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Warning`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&Expectation{makeExpectations(`Warning`, WARNING, args)})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&Expectation{makeExpectations(`Warning`, eval.WARNING, args)})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Evaluates_ok`,
-		func(d Dispatch) {
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{EXPECT_OK}})
+	eval.NewGoConstructor(`PSpec::Evaluates_ok`,
+		func(d eval.Dispatch) {
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Evaluates_to`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Evaluates_to`,
+		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&EvaluationResult{nil, args[0]})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&EvaluationResult{nil, args[0]})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Evaluates_with`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Evaluates_with`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				results := make([]*Expectation, argc)
 				for idx := 0; idx < argc; idx++ {
-					results[idx] = args[idx].(*RuntimeValue).Interface().(*Expectation)
+					results[idx] = args[idx].(*types.RuntimeValue).Interface().(*Expectation)
 				}
-				return WrapRuntime(&EvaluatesWith{nil, results})
+				return types.WrapRuntime(&EvaluatesWith{nil, results})
 			})
 		},
 
-		func(d Dispatch) {
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&EvaluatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, ERR, args)}}})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Parses_to`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Parses_to`,
+		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&ParseResult{nil, args[0].String()})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&ParseResult{nil, args[0].String()})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Validates_ok`,
-		func(d Dispatch) {
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&ValidatesWith{nil, []*Expectation{EXPECT_OK}})
+	eval.NewGoConstructor(`PSpec::Validates_ok`,
+		func(d eval.Dispatch) {
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Validates_with`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Validates_with`,
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				results := make([]*Expectation, argc)
 				for idx := 0; idx < argc; idx++ {
-					results[idx] = args[idx].(*RuntimeValue).Interface().(*Expectation)
+					results[idx] = args[idx].(*types.RuntimeValue).Interface().(*Expectation)
 				}
-				return WrapRuntime(&ValidatesWith{nil, results})
+				return types.WrapRuntime(&ValidatesWith{nil, results})
 			})
 		},
 
-		func(d Dispatch) {
+		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&ValidatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, ERR, args)}}})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
 }

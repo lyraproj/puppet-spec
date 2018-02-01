@@ -1,24 +1,24 @@
 package pspec
 
 import (
-	. "github.com/puppetlabs/go-evaluator/eval"
-	. "github.com/puppetlabs/go-evaluator/impl"
-	. "github.com/puppetlabs/go-evaluator/types"
-	. "github.com/puppetlabs/go-parser/issue"
-	. "github.com/puppetlabs/go-parser/parser"
+	"github.com/puppetlabs/go-evaluator/eval"
+	"github.com/puppetlabs/go-evaluator/impl"
+	"github.com/puppetlabs/go-evaluator/types"
+	"github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-parser/parser"
 )
 
 type (
 	SpecEvaluator interface {
-		Evaluator
+		eval.Evaluator
 
-		CreateTests(expression Expression, loader Loader) []Test
+		CreateTests(expression parser.Expression, loader eval.Loader) []Test
 	}
 
 	specEval struct {
-		evaluator Evaluator
+		evaluator eval.Evaluator
 		nodes     []Node
-		path      []Expression
+		path      []parser.Expression
 	}
 )
 
@@ -52,31 +52,31 @@ var PSPEC_QREFS = map[string]string{
 	`Unindent`:       `PSpec::Unindent`,
 }
 
-func NewSpecEvaluator(loader DefiningLoader) SpecEvaluator {
-	specEval := &specEval{nodes: make([]Node, 0), path: make([]Expression, 0)}
-	specEval.evaluator = NewOverriddenEvaluator(loader, NewStdLogger(), specEval)
+func NewSpecEvaluator(loader eval.DefiningLoader) SpecEvaluator {
+	specEval := &specEval{nodes: make([]Node, 0), path: make([]parser.Expression, 0)}
+	specEval.evaluator = impl.NewOverriddenEvaluator(loader, eval.NewStdLogger(), specEval)
 	return specEval
 }
 
-func (s *specEval) AddDefinitions(expression Expression) {
+func (s *specEval) AddDefinitions(expression parser.Expression) {
 	s.evaluator.AddDefinitions(expression)
 }
 
-func (s *specEval) Evaluate(expression Expression, scope Scope, loader Loader) (PValue, *ReportedIssue) {
+func (s *specEval) Evaluate(expression parser.Expression, scope eval.Scope, loader eval.Loader) (eval.PValue, *issue.Reported) {
 	return s.evaluator.Evaluate(expression, scope, loader)
 }
 
-func (s *specEval) Logger() Logger {
+func (s *specEval) Logger() eval.Logger {
 	return s.evaluator.Logger()
 }
 
-func (s *specEval) specError(issueCode IssueCode, semantic Expression, args H) *ReportedIssue {
-	return NewReportedIssue(issueCode, SEVERITY_ERROR, args, semantic)
+func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, args issue.H) *issue.Reported {
+	return issue.NewReported(issueCode, issue.SEVERITY_ERROR, args, semantic)
 }
 
-func (s *specEval) CreateTests(expression Expression, loader Loader) []Test {
+func (s *specEval) CreateTests(expression parser.Expression, loader eval.Loader) []Test {
 	s.AddDefinitions(expression)
-	if _, err := s.Evaluate(expression, NewScope(), loader); err != nil {
+	if _, err := s.Evaluate(expression, impl.NewScope(), loader); err != nil {
 		panic(err)
 	}
 	tests := make([]Test, len(s.nodes))
@@ -86,20 +86,20 @@ func (s *specEval) CreateTests(expression Expression, loader Loader) []Test {
 	return tests
 }
 
-func (s *specEval) Eval(expression Expression, ctx EvalContext) PValue {
+func (s *specEval) Eval(expression parser.Expression, ctx eval.EvalContext) eval.PValue {
 	switch expression.(type) {
-	case *BlockExpression:
-		return s.eval_BlockExpression(expression.(*BlockExpression), ctx)
-	case *QualifiedReference:
-		return s.eval_QualifiedReference(expression.(*QualifiedReference), ctx)
-	case *CallNamedFunctionExpression:
-		return s.eval_CallNamedFunctionExpression(expression.(*CallNamedFunctionExpression), ctx)
+	case *parser.BlockExpression:
+		return s.eval_BlockExpression(expression.(*parser.BlockExpression), ctx)
+	case *parser.QualifiedReference:
+		return s.eval_QualifiedReference(expression.(*parser.QualifiedReference), ctx)
+	case *parser.CallNamedFunctionExpression:
+		return s.eval_CallNamedFunctionExpression(expression.(*parser.CallNamedFunctionExpression), ctx)
 	default:
 		return s.evaluator.Eval(expression, ctx)
 	}
 }
 
-func (s *specEval) ResolveDefinitions(c EvalContext) {
+func (s *specEval) ResolveDefinitions(c eval.EvalContext) {
 	s.evaluator.ResolveDefinitions(c)
 }
 
@@ -107,12 +107,12 @@ func (s *specEval) addNode(n Node) {
 	s.nodes = append(s.nodes, n)
 }
 
-func (s *specEval) eval_BlockExpression(expr *BlockExpression, ctx EvalContext) PValue {
+func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression, ctx eval.EvalContext) eval.PValue {
 	stmts := expr.Statements()
-	result := PValue(UNDEF)
+	result := eval.PValue(eval.UNDEF)
 	oldPath := s.path
 
-	p := make([]Expression, len(s.path), len(s.path)+1)
+	p := make([]parser.Expression, len(s.path), len(s.path)+1)
 	copy(p, s.path)
 	s.path = append(p, expr)
 
@@ -123,7 +123,7 @@ func (s *specEval) eval_BlockExpression(expr *BlockExpression, ctx EvalContext) 
 	for _, stmt := range stmts {
 		result = s.Eval(stmt, ctx)
 		if len(oldPath) == 0 {
-			if rt, ok := result.(*RuntimeValue); ok {
+			if rt, ok := result.(*types.RuntimeValue); ok {
 				var n Node
 				if n, ok = rt.Interface().(Node); ok {
 					s.addNode(n)
@@ -134,9 +134,9 @@ func (s *specEval) eval_BlockExpression(expr *BlockExpression, ctx EvalContext) 
 	return result
 }
 
-func (s *specEval) eval_QualifiedReference(qr *QualifiedReference, ctx EvalContext) PValue {
-	if i, ok := IssueForCode2(IssueCode(qr.Name())); ok {
-		return WrapRuntime(i)
+func (s *specEval) eval_QualifiedReference(qr *parser.QualifiedReference, ctx eval.EvalContext) eval.PValue {
+	if i, ok := issue.IssueForCode2(issue.Code(qr.Name())); ok {
+		return types.WrapRuntime(i)
 	}
 	if p, ok := PSPEC_QREFS[qr.Name()]; ok {
 		qr = qr.WithName(p)
@@ -144,8 +144,8 @@ func (s *specEval) eval_QualifiedReference(qr *QualifiedReference, ctx EvalConte
 	return s.evaluator.Eval(qr, ctx)
 }
 
-func (s *specEval) eval_CallNamedFunctionExpression(call *CallNamedFunctionExpression, c EvalContext) PValue {
-	if qr, ok := call.Functor().(*QualifiedReference); ok {
+func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFunctionExpression, c eval.EvalContext) eval.PValue {
+	if qr, ok := call.Functor().(*parser.QualifiedReference); ok {
 		if p, ok := PSPEC_QREFS[qr.Name()]; ok {
 			call = call.WithFunctor(qr.WithName(p))
 		}
@@ -153,19 +153,19 @@ func (s *specEval) eval_CallNamedFunctionExpression(call *CallNamedFunctionExpre
 	return s.evaluator.Eval(call, c)
 }
 
-func hasError(issues []*ReportedIssue) bool {
-	for _, issue := range issues {
-		if issue.Severity() == SEVERITY_ERROR {
+func hasError(issues []*issue.Reported) bool {
+	for _, i := range issues {
+		if i.Severity() == issue.SEVERITY_ERROR {
 			return true
 		}
 	}
 	return false
 }
 
-func failOnError(assertions Assertions, issues []*ReportedIssue) {
-	for _, issue := range issues {
-		if issue.Severity() == SEVERITY_ERROR {
-			assertions.Fail(issue.Error())
+func failOnError(assertions Assertions, issues []*issue.Reported) {
+	for _, i := range issues {
+		if i.Severity() == issue.SEVERITY_ERROR {
+			assertions.Fail(i.Error())
 			return
 		}
 	}

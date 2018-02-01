@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	. "github.com/puppetlabs/go-evaluator/eval"
+	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
-	. "github.com/puppetlabs/go-evaluator/types"
+	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
 )
 
 type (
 	LazyValue interface {
-		Get(tc *TestContext) PValue
+		Get(tc *TestContext) eval.PValue
 		Id() int64
 	}
 
@@ -33,23 +33,23 @@ type (
 
 	GenericValue struct {
 		lazyValue
-		content PValue
+		content eval.PValue
 	}
 
 	DirectoryValue struct {
 		lazyValue
-		content PValue
+		content eval.PValue
 	}
 
 	FileValue struct {
 		lazyValue
-		content PValue
+		content eval.PValue
 	}
 
 	FormatValue struct {
 		lazyValue
-		format    PValue
-		arguments []PValue
+		format    eval.PValue
+		arguments []eval.PValue
 	}
 
 	LazyScope struct {
@@ -68,37 +68,37 @@ func (lv *lazyValue) Id() int64 {
 	return lv.id
 }
 
-func newGenericValue(content PValue) *GenericValue {
+func newGenericValue(content eval.PValue) *GenericValue {
 	d := &GenericValue{content: content}
 	d.lazyValue.initialize()
 	return d
 }
 
-func (lg *LazyValueGet) Get(tc *TestContext) PValue {
+func (lg *LazyValueGet) Get(tc *TestContext) eval.PValue {
 	if lv, ok := tc.getLazyValue(lg.valueName); ok {
 		return tc.Get(lv)
 	}
-	panic(Error(PSPEC_GET_OF_UNKNOWN_VARIABLE, issue.H{`name`: lg.valueName}))
+	panic(eval.Error(PSPEC_GET_OF_UNKNOWN_VARIABLE, issue.H{`name`: lg.valueName}))
 }
 
-func (gv *GenericValue) Get(tc *TestContext) PValue {
+func (gv *GenericValue) Get(tc *TestContext) eval.PValue {
 	return tc.resolveLazyValue(gv.content)
 }
 
-func newDirectoryValue(content PValue) *DirectoryValue {
+func newDirectoryValue(content eval.PValue) *DirectoryValue {
 	d := &DirectoryValue{content: content}
 	d.lazyValue.initialize()
 	return d
 }
 
-func (dv *DirectoryValue) Get(tc *TestContext) PValue {
+func (dv *DirectoryValue) Get(tc *TestContext) eval.PValue {
 	tmpDir, err := ioutil.TempDir(``, `pspec`)
 	if err != nil {
 		panic(err)
 	}
-	dir, ok := tc.resolveLazyValue(dv.content).(*HashValue)
+	dir, ok := tc.resolveLazyValue(dv.content).(*types.HashValue)
 	if !ok {
-		panic(Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`}))
+		panic(eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`}))
 	}
 	makeDirectories(tmpDir, dir)
 	tc.registerTearDown(func() {
@@ -107,16 +107,16 @@ func (dv *DirectoryValue) Get(tc *TestContext) PValue {
 			panic(err)
 		}
 	})
-	return WrapString(tmpDir)
+	return types.WrapString(tmpDir)
 }
 
-func newFileValue(content PValue) *FileValue {
+func newFileValue(content eval.PValue) *FileValue {
 	d := &FileValue{content: content}
 	d.lazyValue.initialize()
 	return d
 }
 
-func (dv *FileValue) Get(tc *TestContext) PValue {
+func (dv *FileValue) Get(tc *TestContext) eval.PValue {
 	tmpFile, err := ioutil.TempFile(``, `pspec`)
 	if err != nil {
 		panic(err)
@@ -129,23 +129,23 @@ func (dv *FileValue) Get(tc *TestContext) PValue {
 			panic(err)
 		}
 	})
-	return WrapString(path)
+	return types.WrapString(path)
 }
 
-func newFormatValue(format PValue, arguments []PValue) *FormatValue {
+func newFormatValue(format eval.PValue, arguments []eval.PValue) *FormatValue {
 	d := &FormatValue{format: format, arguments: arguments}
 	d.lazyValue.initialize()
 	return d
 }
 
-func (q *FormatValue) Get(tc *TestContext) PValue {
-	if format, ok := tc.resolveLazyValue(q.format).(*StringValue); ok {
-		return WrapString(PuppetSprintf(format.String(), tc.resolveLazyValues(WrapArray(q.arguments))...))
+func (q *FormatValue) Get(tc *TestContext) eval.PValue {
+	if format, ok := tc.resolveLazyValue(q.format).(*types.StringValue); ok {
+		return types.WrapString(types.PuppetSprintf(format.String(), tc.resolveLazyValues(types.WrapArray(q.arguments))...))
 	}
-	panic(Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
+	panic(eval.Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
 }
 
-func (ls *LazyScope) Get(name string) (value PValue, found bool) {
+func (ls *LazyScope) Get(name string) (value eval.PValue, found bool) {
 	tc := ls.ctx
 	if lv, ok := tc.getLazyValue(name); ok {
 		return tc.Get(lv), true
@@ -153,11 +153,11 @@ func (ls *LazyScope) Get(name string) (value PValue, found bool) {
 	return ls.BasicScope.Get(name)
 }
 
-func makeDirectories(parent string, hash *HashValue) {
-	hash.EachPair(func(key, value PValue) {
+func makeDirectories(parent string, hash *types.HashValue) {
+	hash.EachPair(func(key, value eval.PValue) {
 		name := key.String()
 		path := filepath.Join(parent, name)
-		if dir, ok := value.(*HashValue); ok {
+		if dir, ok := value.(*types.HashValue); ok {
 			err := os.Mkdir(path, 0755)
 			if err != nil {
 				panic(err)
@@ -169,15 +169,15 @@ func makeDirectories(parent string, hash *HashValue) {
 	})
 }
 
-func writeFileValue(path string, value PValue) {
+func writeFileValue(path string, value eval.PValue) {
 	var err error
 	switch value.(type) {
-	case *StringValue:
+	case *types.StringValue:
 		err = ioutil.WriteFile(path, []byte(value.String()), 0644)
-	case *BinaryValue:
-		err = ioutil.WriteFile(path, value.(*BinaryValue).Bytes(), 0644)
+	case *types.BinaryValue:
+		err = ioutil.WriteFile(path, value.(*types.BinaryValue).Bytes(), 0644)
 	default:
-		panic(Error(PSPEC_INVALID_FILE_CONTENT, issue.H{`value`: value}))
+		panic(eval.Error(PSPEC_INVALID_FILE_CONTENT, issue.H{`value`: value}))
 	}
 	if err != nil {
 		panic(err)
@@ -185,54 +185,54 @@ func writeFileValue(path string, value PValue) {
 }
 
 func init() {
-	NewGoConstructor(`PSpec::Directory`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Directory`,
+		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(newDirectoryValue(args[0]))
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(newDirectoryValue(args[0]))
 			})
 		})
 
-	NewGoConstructor(`PSpec::File`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::File`,
+		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(newFileValue(args[0]))
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(newFileValue(args[0]))
 			})
 		})
 
-	NewGoConstructor(`PSpec::Format`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Format`,
+		func(d eval.Dispatch) {
 			d.Param(`Any`)
 			d.RepeatedParam(`Any`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(newFormatValue(args[0], args[1:]))
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(newFormatValue(args[0], args[1:]))
 			})
 		})
 
-	NewGoConstructor(`PSpec::Get`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Get`,
+		func(d eval.Dispatch) {
 			d.Param(`String[1]`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
-				return WrapRuntime(&LazyValueGet{args[0].String()})
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&LazyValueGet{args[0].String()})
 			})
 		})
 
-	NewGoConstructor(`PSpec::Let`,
-		func(d Dispatch) {
+	eval.NewGoConstructor(`PSpec::Let`,
+		func(d eval.Dispatch) {
 			d.Param(`String[1]`)
 			d.Param(`Any`)
-			d.Function(func(c EvalContext, args []PValue) PValue {
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				v := args[1]
 				var lv LazyValue
-				r, ok := v.(*RuntimeValue)
+				r, ok := v.(*types.RuntimeValue)
 				if ok {
 					lv, ok = r.Interface().(LazyValue)
 				}
 				if !ok {
 					lv = newGenericValue(v)
 				}
-				return WrapRuntime(&LazyValueLet{args[0].String(), lv})
+				return types.WrapRuntime(&LazyValueLet{args[0].String(), lv})
 			})
 		})
 }
