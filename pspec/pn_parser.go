@@ -1,6 +1,8 @@
 package pspec
 
 import (
+	"strings"
+
 	"github.com/puppetlabs/go-parser/parser"
 	"github.com/puppetlabs/go-parser/pn"
 )
@@ -44,6 +46,7 @@ func parseNext(lexer parser.Lexer) pn.PN {
 }
 
 func parseArray(lexer parser.Lexer) pn.PN {
+	lexer.NextToken()
 	return pn.List(parseElements(lexer, parser.TOKEN_RB))
 }
 
@@ -53,7 +56,10 @@ func parseMap(lexer parser.Lexer) pn.PN {
 	for token != parser.TOKEN_RC && token != parser.TOKEN_END {
 		lexer.AssertToken(parser.TOKEN_COLON)
 		lexer.NextToken()
-		key := parseIdentifier(lexer)
+		key, ok := parseIdentifier(lexer)
+		if !ok {
+			lexer.SyntaxError()
+		}
 		entries = append(entries, parseNext(lexer).WithName(key))
 		token = lexer.CurrentToken()
 	}
@@ -64,7 +70,10 @@ func parseMap(lexer parser.Lexer) pn.PN {
 
 func parseCall(lexer parser.Lexer) pn.PN {
 	lexer.NextToken()
-	name := parseIdentifier(lexer)
+	name, ok := parseIdentifier(lexer)
+	if !ok {
+		lexer.SyntaxError()
+	}
 	elements := parseElements(lexer, parser.TOKEN_RP)
 	return pn.Call(name, elements...)
 }
@@ -75,7 +84,7 @@ func parseLiteral(lexer parser.Lexer) pn.PN {
 	return pn
 }
 
-func parseIdentifier(lexer parser.Lexer) string {
+func parseIdentifier(lexer parser.Lexer) (string, bool) {
 	switch lexer.CurrentToken() {
 	case parser.TOKEN_END,
 		parser.TOKEN_LP, parser.TOKEN_WSLP, parser.TOKEN_RP,
@@ -85,15 +94,30 @@ func parseIdentifier(lexer parser.Lexer) string {
 		parser.TOKEN_COMMA, parser.TOKEN_COLON, parser.TOKEN_SEMICOLON,
 		parser.TOKEN_STRING, parser.TOKEN_INTEGER, parser.TOKEN_FLOAT, parser.TOKEN_CONCATENATED_STRING, parser.TOKEN_HEREDOC,
 		parser.TOKEN_REGEXP:
-		lexer.SyntaxError()
-		return ``
+		return ``, false
 	case parser.TOKEN_DEFAULT:
 		lexer.NextToken()
-		return `default`
+		return `default`, true
 	default:
 		str := lexer.TokenString()
+		pos := lexer.TokenStartPos()
 		lexer.NextToken()
-		return str
+		if lexer.CurrentToken() == parser.TOKEN_SUBTRACT {
+			revertTo := lexer.TokenStartPos()
+			sr := lexer.(parser.StringReader)
+			lexer.NextToken()
+			str2Pos := lexer.TokenStartPos()
+			if str2, ok := parseIdentifier(lexer); ok {
+				// If the two identifiers are bound together with a '-' and no whitespace
+				// then accept this as one identifer
+				sr := lexer.(parser.StringReader)
+				if strings.IndexAny(sr.Text()[pos:str2Pos], " \t\n") < 0 {
+					return str + `-` + str2, true
+				}
+			}
+			sr.SetPos(revertTo)
+		}
+		return str, true
 	}
 }
 
