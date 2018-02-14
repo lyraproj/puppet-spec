@@ -25,7 +25,7 @@ func parseNext(lexer parser.Lexer) pn.PN {
 		return parseLiteral(lexer)
 	case parser.TOKEN_IDENTIFIER:
 		switch lexer.TokenValue() {
-		case `null`:
+		case `nil`:
 			return pn.Literal(nil)
 		default:
 			lexer.SyntaxError()
