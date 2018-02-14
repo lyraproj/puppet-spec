@@ -7,6 +7,7 @@ import (
 	"github.com/puppetlabs/go-evaluator/impl"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-parser/parser"
 	"github.com/puppetlabs/go-pspec/testutils"
 )
 
@@ -189,8 +190,19 @@ func (p *ParseResult) CreateTest(actual interface{}) Executable {
 	expectedPN := ParsePN(``, p.expected)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, true)
+		actual, issues := parseAndValidate(path, source, false)
 		failOnError(assertions, issues)
+
+		// Automatically strip off blocks that contain one statement
+		if pr, ok := actual.(*parser.Program); ok {
+			actual = pr.Body()
+		}
+		if be, ok := actual.(*parser.BlockExpression); ok {
+			s := be.Statements()
+			if len(s) == 1 {
+				actual = s[0]
+			}
+		}
 		actualPN := actual.ToPN()
 		assertions.AssertEquals(expectedPN.String(), actualPN.String())
 	}
