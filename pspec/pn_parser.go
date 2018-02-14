@@ -34,9 +34,13 @@ func parseNext(lexer parser.Lexer) pn.PN {
 	case parser.TOKEN_SUBTRACT:
 		switch lexer.NextToken() {
 		case parser.TOKEN_FLOAT:
-			return pn.Literal(-lexer.TokenValue().(float64))
+			v := -lexer.TokenValue().(float64)
+			lexer.NextToken()
+			return pn.Literal(v)
 		case parser.TOKEN_INTEGER:
-			return pn.Literal(-lexer.TokenValue().(int64))
+			v := -lexer.TokenValue().(int64)
+			lexer.NextToken()
+			return pn.Literal(v)
 		default:
 			lexer.SyntaxError()
 		}
@@ -103,21 +107,24 @@ func parseIdentifier(lexer parser.Lexer) (string, bool) {
 		str := lexer.TokenString()
 		pos := lexer.TokenStartPos()
 		lexer.NextToken()
-		if lexer.CurrentToken() == parser.TOKEN_SUBTRACT {
-			revertTo := lexer.TokenStartPos()
-			sr := lexer.(parser.StringReader)
-			lexer.NextToken()
-			str2Pos := lexer.TokenStartPos()
-			if str2, ok := parseIdentifier(lexer); ok {
-				// If the two identifiers are bound together with a '-' and no whitespace
-				// then accept this as one identifer
-				sr := lexer.(parser.StringReader)
-				if strings.IndexAny(sr.Text()[pos:str2Pos], " \t\n") < 0 {
-					return str + `-` + str2, true
-				}
-			}
-			sr.SetPos(revertTo)
+		if lexer.CurrentToken() != parser.TOKEN_SUBTRACT {
+			return str, true
 		}
+
+		revertPos := lexer.TokenStartPos()
+		lexer.NextToken()
+		str2Pos := lexer.TokenStartPos()
+
+		// If the two identifiers are bound together with a '-' and no whitespace
+		// then accept this as one identifer
+		if str2, ok := parseIdentifier(lexer); ok && strings.IndexAny(lexer.(parser.StringReader).Text()[pos:str2Pos], " \t\n") < 0 {
+			return str + `-` + str2, true
+		}
+
+		// Rewind lexer to previous token
+		lexer.SetPos(revertPos)
+		lexer.NextToken()
+
 		return str, true
 	}
 }
