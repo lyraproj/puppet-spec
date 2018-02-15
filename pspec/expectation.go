@@ -512,7 +512,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`String`)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
-				return types.WrapRuntime(&ParseResult{nil, args[0].String()})
+				return types.WrapRuntime(&ParseResult{location: c.StackTop(), expected: args[0].String()})
 			})
 		})
 

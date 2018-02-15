@@ -55,6 +55,8 @@ type (
 	}
 
 	ParseResult struct {
+		// ParseResult needs a location so that it can provide that to the PN parser
+		location issue.Location
 		example  *Example
 		expected string
 	}
@@ -187,7 +189,7 @@ func (n *node) Get(key string) (v LazyValue, ok bool) {
 
 func (p *ParseResult) CreateTest(actual interface{}) Executable {
 	path, source := pathAndContent(actual)
-	expectedPN := ParsePN(``, p.expected)
+	expectedPN := ParsePN(p.location, p.expected)
 
 	return func(context *TestContext, assertions Assertions) {
 		actual, issues := parseAndValidate(path, source, false)
