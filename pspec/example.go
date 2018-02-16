@@ -379,7 +379,7 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::EppSource`,
+	eval.NewGoConstructor(`PSpec::Epp_source`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam(`String`)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
@@ -392,21 +392,12 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::NamedSource`,
+	eval.NewGoConstructor(`PSpec::Named_source`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
 			d.Param(`String`)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&NamedSource{source{args[1].String(), false}, args[0].String()})
-			})
-		})
-
-	eval.NewGoConstructor(`PSpec::NamedEppSource`,
-		func(d eval.Dispatch) {
-			d.Param(`String`)
-			d.Param(`String`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
-				return types.WrapRuntime(&NamedSource{source{args[1].String(), true}, args[0].String()})
 			})
 		})
 
