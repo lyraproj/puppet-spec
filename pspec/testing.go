@@ -32,6 +32,7 @@ type (
 		tearDowns      []Housekeeping
 		scope          eval.Scope
 		loader         eval.Loader
+		parserOptions  eval.KeyedValue
 	}
 
 	testNode struct {
@@ -57,6 +58,32 @@ func (tc *TestContext) Get(l LazyValue) eval.PValue {
 	v := l.Get(tc)
 	tc.accessedValues[l.Id()] = v
 	return v
+}
+
+func (tc *TestContext) ParserOptions() []parser.Option {
+	o := []parser.Option{}
+	if tc.parent != nil {
+		o = append(o, tc.parent.ParserOptions()...)
+	}
+	if tc.parserOptions != nil {
+		tc.parserOptions.EachPair(func(k, v eval.PValue) {
+			switch k.String() {
+			case `tasks`:
+				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
+					o = append(o, parser.PARSER_TASKS_ENABLED)
+				}
+			case `hex_escapes`:
+				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
+					o = append(o, parser.PARSER_HANDLE_HEX_ESCAPES)
+				}
+			case `backtick_strings`:
+				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
+					o = append(o, parser.PARSER_HANDLE_BACKTICK_STRINGS)
+				}
+			}
+		})
+	}
+	return o
 }
 
 func (tc *TestContext) newLazyScope() *LazyScope {
@@ -155,11 +182,7 @@ func (v *TestGroup) Tests() []Test {
 	return v.tests
 }
 
-func parseAndValidate(name, source string, singleExpression bool, epp bool) (parser.Expression, []*issue.Reported) {
-	o := []parser.Option{}
-	if epp {
-		o = append(o, parser.PARSER_EPP_MODE)
-	}
+func parseAndValidate(name, source string, singleExpression bool, o ...parser.Option) (parser.Expression, []*issue.Reported) {
 	expr, err := parser.CreateParser(o...).Parse(name, source, singleExpression)
 	var issues []*issue.Reported
 	if err != nil {

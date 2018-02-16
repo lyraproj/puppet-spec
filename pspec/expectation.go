@@ -11,6 +11,7 @@ import (
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-evaluator/utils"
 	"github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-parser/parser"
 )
 
 type (
@@ -363,7 +364,11 @@ func makeExpectations(name string, level eval.LogLevel, args []eval.PValue) (res
 func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 	path, source, epp := pathAndContent(actual)
 	return func(tc *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, false, epp)
+		o := tc.ParserOptions()
+		if epp {
+			o = append(o, parser.PARSER_EPP_MODE)
+		}
+		actual, issues := parseAndValidate(path, source, false, o...)
 		evaluator := e.example.Evaluator()
 		if !hasError(issues) {
 			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
@@ -380,7 +385,11 @@ func (e *EvaluatesWith) setExample(example *Example) {
 func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
 	path, source, epp := pathAndContent(actual)
 	return func(tc *TestContext, assertions Assertions) {
-		_, issues := parseAndValidate(path, source, true, epp)
+		o := tc.ParserOptions()
+		if epp {
+			o = append(o, parser.PARSER_EPP_MODE)
+		}
+		_, issues := parseAndValidate(path, source, true, o...)
 		validateExpectations(assertions, v.expectations, issues, eval.NewArrayLogger())
 	}
 }

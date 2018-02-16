@@ -80,6 +80,10 @@ type (
 		name string
 	}
 
+	ParserOptions struct {
+		options eval.KeyedValue
+	}
+
 	SettingsInput struct {
 		settings eval.PValue
 	}
@@ -106,7 +110,11 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 	path, source, epp := pathAndContent(actual)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, false, epp)
+		o := context.ParserOptions()
+		if epp {
+			o = append(o, parser.PARSER_EPP_MODE)
+		}
+		actual, issues := parseAndValidate(path, source, false, o...)
 		failOnError(assertions, issues)
 		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
 		failOnError(assertions, evalIssues)
@@ -198,7 +206,11 @@ func (p *ParseResult) CreateTest(actual interface{}) Executable {
 	expectedPN := ParsePN(p.location, p.expected)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, false, epp)
+		o := context.ParserOptions()
+		if epp {
+			o = append(o, parser.PARSER_EPP_MODE)
+		}
+		actual, issues := parseAndValidate(path, source, false, o...)
 		failOnError(assertions, issues)
 
 		// Automatically strip off blocks that contain one statement
@@ -258,6 +270,16 @@ func (i *Source) AsInput() Input {
 
 func (ns *NamedSource) CreateTests(expected Result) []Executable {
 	return []Executable{expected.CreateTest(ns)}
+}
+
+func (ps *ParserOptions) CreateTests(expected Result) []Executable {
+	return []Executable{func(tc *TestContext, assertions Assertions) {
+		if tc.parserOptions == nil {
+			tc.parserOptions = ps.options
+		} else {
+			tc.parserOptions = tc.parserOptions.Merge(ps.options)
+		}
+	}}
 }
 
 func init() {
@@ -406,6 +428,14 @@ func init() {
 			d.Param(`String`)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				return types.WrapString(testutils.Unindent(args[0].String()))
+			})
+		})
+
+	eval.NewGoConstructor(`PSpec::Parser_options`,
+		func(d eval.Dispatch) {
+			d.Param(`Hash[Pattern[/[a-z_]*/],Data]`)
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&ParserOptions{args[0].(*types.HashValue)})
 			})
 		})
 }

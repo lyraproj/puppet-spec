@@ -46,6 +46,7 @@ var PSPEC_QREFS = map[string]string{
 	`Settings`:       `PSpec::Settings`,
 	`Source`:         `PSpec::Source`,
 	`Match`:          `PSpec::Match`,
+	`Parser_options`: `PSpec::Parser_options`,
 	`Parses_to`:      `PSpec::Parses_to`,
 	`Validates_ok`:   `PSpec::Validates_ok`,
 	`Validates_with`: `PSpec::Validates_with`,
