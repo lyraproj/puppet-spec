@@ -155,8 +155,12 @@ func (v *TestGroup) Tests() []Test {
 	return v.tests
 }
 
-func parseAndValidate(name, source string, singleExpression bool) (parser.Expression, []*issue.Reported) {
-	expr, err := parser.CreateParser().Parse(name, source, singleExpression)
+func parseAndValidate(name, source string, singleExpression bool, epp bool) (parser.Expression, []*issue.Reported) {
+	o := []parser.Option{}
+	if epp {
+		o = append(o, parser.PARSER_EPP_MODE)
+	}
+	expr, err := parser.CreateParser(o...).Parse(name, source, singleExpression)
 	var issues []*issue.Reported
 	if err != nil {
 		i, ok := err.(*issue.Reported)

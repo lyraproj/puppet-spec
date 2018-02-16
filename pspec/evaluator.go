@@ -25,6 +25,7 @@ type (
 var PSPEC_QREFS = map[string]string{
 	`Contain`:        `PSpec::Contain`,
 	`Directory`:      `PSpec::Directory`,
+	`EppSource`:      `PSpec::EppSource`,
 	`Error`:          `PSpec::Error`,
 	`Evaluates_ok`:   `PSpec::Evaluates_ok`,
 	`Evaluates_to`:   `PSpec::Evaluates_to`,
@@ -39,6 +40,7 @@ var PSPEC_QREFS = map[string]string{
 	`Include`:        `PSpec::Include`,
 	`Issue`:          `PSpec::Issue`,
 	`Let`:            `PSpec::Let`,
+	`NamedEppSource`: `PSpec::NamedEppSource`,
 	`NamedSource`:    `PSpec::NamedSource`,
 	`Notice`:         `PSpec::Notice`,
 	`Scope`:          `PSpec::Scope`,

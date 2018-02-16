@@ -361,9 +361,9 @@ func makeExpectations(name string, level eval.LogLevel, args []eval.PValue) (res
 }
 
 func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
-	path, source := pathAndContent(actual)
+	path, source, epp := pathAndContent(actual)
 	return func(tc *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, false)
+		actual, issues := parseAndValidate(path, source, false, epp)
 		evaluator := e.example.Evaluator()
 		if !hasError(issues) {
 			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
@@ -378,9 +378,9 @@ func (e *EvaluatesWith) setExample(example *Example) {
 }
 
 func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
-	path, source := pathAndContent(actual)
+	path, source, epp := pathAndContent(actual)
 	return func(tc *TestContext, assertions Assertions) {
-		_, issues := parseAndValidate(path, source, true)
+		_, issues := parseAndValidate(path, source, true, epp)
 		validateExpectations(assertions, v.expectations, issues, eval.NewArrayLogger())
 	}
 }

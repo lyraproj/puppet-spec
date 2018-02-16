@@ -66,13 +66,18 @@ type (
 		expected eval.PValue
 	}
 
+	source struct {
+		code string
+		epp  bool
+	}
+
 	Source struct {
-		sources []string
+		sources []*source
 	}
 
 	NamedSource struct {
-		name   string
-		source string
+		source
+		name string
 	}
 
 	SettingsInput struct {
@@ -84,23 +89,24 @@ type (
 	}
 )
 
-func pathAndContent(source interface{}) (path, content string) {
-	switch source.(type) {
-	case string:
-		return ``, source.(string)
+func pathAndContent(src interface{}) (path, content string, epp bool) {
+	switch src.(type) {
+	case *source:
+		s := src.(*source)
+		return ``, s.code, s.epp
 	case *NamedSource:
-		ns := source.(*NamedSource)
-		return ns.name, ns.source
+		ns := src.(*NamedSource)
+		return ns.name, ns.code, ns.epp
 	default:
-		panic(eval.Error(eval.EVAL_FAILURE, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, source)}))
+		panic(eval.Error(eval.EVAL_FAILURE, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, src)}))
 	}
 }
 
 func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
-	path, source := pathAndContent(actual)
+	path, source, epp := pathAndContent(actual)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, false)
+		actual, issues := parseAndValidate(path, source, false, epp)
 		failOnError(assertions, issues)
 		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
 		failOnError(assertions, evalIssues)
@@ -188,11 +194,11 @@ func (n *node) Get(key string) (v LazyValue, ok bool) {
 }
 
 func (p *ParseResult) CreateTest(actual interface{}) Executable {
-	path, source := pathAndContent(actual)
+	path, source, epp := pathAndContent(actual)
 	expectedPN := ParsePN(p.location, p.expected)
 
 	return func(context *TestContext, assertions Assertions) {
-		actual, issues := parseAndValidate(path, source, false)
+		actual, issues := parseAndValidate(path, source, false, epp)
 		failOnError(assertions, issues)
 
 		// Automatically strip off blocks that contain one statement
@@ -335,7 +341,7 @@ func init() {
 				for idx := 0; idx < argc; idx++ {
 					arg := args[idx]
 					if str, ok := arg.(*types.StringValue); ok {
-						inputs[idx] = &Source{[]string{str.String()}}
+						inputs[idx] = &Source{[]*source{{str.String(), false}}}
 					} else {
 						inputs[idx] = arg.(*types.RuntimeValue).Interface().(Input)
 					}
@@ -365,9 +371,22 @@ func init() {
 			d.RepeatedParam(`String`)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				argc := len(args)
-				sources := make([]string, argc)
+				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
-					sources[idx] = args[idx].String()
+					sources[idx] = &source{args[idx].String(), false}
+				}
+				return types.WrapRuntime(&Source{sources})
+			})
+		})
+
+	eval.NewGoConstructor(`PSpec::EppSource`,
+		func(d eval.Dispatch) {
+			d.RepeatedParam(`String`)
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				argc := len(args)
+				sources := make([]*source, argc)
+				for idx := 0; idx < argc; idx++ {
+					sources[idx] = &source{args[idx].String(), true}
 				}
 				return types.WrapRuntime(&Source{sources})
 			})
@@ -378,7 +397,16 @@ func init() {
 			d.Param(`String`)
 			d.Param(`String`)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
-				return types.WrapRuntime(&NamedSource{args[0].String(), args[1].String()})
+				return types.WrapRuntime(&NamedSource{source{args[1].String(), false}, args[0].String()})
+			})
+		})
+
+	eval.NewGoConstructor(`PSpec::NamedEppSource`,
+		func(d eval.Dispatch) {
+			d.Param(`String`)
+			d.Param(`String`)
+			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+				return types.WrapRuntime(&NamedSource{source{args[1].String(), true}, args[0].String()})
 			})
 		})
 

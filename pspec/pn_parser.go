@@ -55,6 +55,8 @@ func (p *pnParser) parseNext() pn.PN {
 		return p.parseCall()
 	case tokenBool, tokenInt, tokenFloat, tokenString, tokenNil:
 		return p.parseLiteral()
+	case tokenEnd:
+		panic(p.error(`unexpected end of input`))
 	default:
 		panic(p.error(fmt.Sprintf(`unexpected '%v'`, p.tokenValue)))
 	}
