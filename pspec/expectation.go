@@ -66,10 +66,10 @@ type (
 
 var EXPECT_OK = &Expectation{levelExpectations: []*LevelExpectation{}}
 
-func (e *Expectation) MatchEntries(b *bytes.Buffer, log *eval.ArrayLogger, issues []*issue.Reported) {
+func (e *Expectation) MatchEntries(b *bytes.Buffer, log *eval.ArrayLogger, allIssues []*issue.Reported) {
 	for _, level := range []eval.LogLevel{eval.NOTICE, eval.WARNING, eval.ERR} {
 		entries := log.Entries(level)
-		issues := issuesForLevel(issues, level)
+		issues := issuesForLevel(allIssues, level)
 		includes := make([]*Include, 0)
 		excludes := make([]*Exclude, 0)
 		for _, le := range e.levelExpectations {
@@ -113,7 +113,7 @@ nextStr:
 		}
 		excluded := false
 		for _, e := range excludes {
-			if e.matchLogEntry(b, level, str) {
+			if e.matchAppendEntry(b, level, str) {
 				excluded = true
 			}
 		}
@@ -131,7 +131,7 @@ nextIssue:
 		}
 		excluded := false
 		for _, e := range excludes {
-			if e.matchIssue(b, issue) {
+			if e.matchAppendIssue(b, issue) {
 				excluded = true
 			}
 		}
@@ -180,7 +180,7 @@ nextMatch:
 	}
 }
 
-func (e *Exclude) matchLogEntry(b *bytes.Buffer, level eval.LogLevel, str string) bool {
+func (e *Exclude) matchAppendEntry(b *bytes.Buffer, level eval.LogLevel, str string) bool {
 	for _, m := range e.matchers {
 		if m.MatchString(str) {
 			fmt.Fprintf(b, "%s(%s) matches exclusion %s\n", level, str, m.String())
@@ -190,7 +190,7 @@ func (e *Exclude) matchLogEntry(b *bytes.Buffer, level eval.LogLevel, str string
 	return false
 }
 
-func (e *Exclude) matchIssue(b *bytes.Buffer, issue *issue.Reported) bool {
+func (e *Exclude) matchAppendIssue(b *bytes.Buffer, issue *issue.Reported) bool {
 	excluded := false
 	for _, m := range e.matchers {
 		if m.MatchIssue(issue) {
@@ -362,7 +362,7 @@ func makeExpectations(name string, level eval.LogLevel, args []eval.PValue) (res
 }
 
 func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
-	path, source, epp := pathAndContent(actual)
+	path, source, epp := pathContentAndEpp(actual)
 	return func(tc *TestContext, assertions Assertions) {
 		o := tc.ParserOptions()
 		if epp {
@@ -383,7 +383,7 @@ func (e *EvaluatesWith) setExample(example *Example) {
 }
 
 func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
-	path, source, epp := pathAndContent(actual)
+	path, source, epp := pathContentAndEpp(actual)
 	return func(tc *TestContext, assertions Assertions) {
 		o := tc.ParserOptions()
 		if epp {

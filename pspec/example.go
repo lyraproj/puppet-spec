@@ -93,7 +93,7 @@ type (
 	}
 )
 
-func pathAndContent(src interface{}) (path, content string, epp bool) {
+func pathContentAndEpp(src interface{}) (path, content string, epp bool) {
 	switch src.(type) {
 	case *source:
 		s := src.(*source)
@@ -107,7 +107,7 @@ func pathAndContent(src interface{}) (path, content string, epp bool) {
 }
 
 func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
-	path, source, epp := pathAndContent(actual)
+	path, source, epp := pathContentAndEpp(actual)
 
 	return func(context *TestContext, assertions Assertions) {
 		o := context.ParserOptions()
@@ -202,7 +202,7 @@ func (n *node) Get(key string) (v LazyValue, ok bool) {
 }
 
 func (p *ParseResult) CreateTest(actual interface{}) Executable {
-	path, source, epp := pathAndContent(actual)
+	path, source, epp := pathContentAndEpp(actual)
 	expectedPN := ParsePN(p.location, p.expected)
 
 	return func(context *TestContext, assertions Assertions) {
