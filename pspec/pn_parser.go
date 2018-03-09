@@ -248,8 +248,8 @@ func (p *pnParser) consumeFloat(s int, d rune) {
 			if p.skipDecimalDigits() == 0 {
 				panic(p.error(`digit expected`))
 			}
+			c, n = p.peek()
 		}
-		c, n = p.peek()
 	}
 
 	switch c {
