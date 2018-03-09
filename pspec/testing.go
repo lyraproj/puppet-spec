@@ -192,9 +192,7 @@ func parseAndValidate(name, source string, singleExpression bool, o ...parser.Op
 		}
 		issues = []*issue.Reported{i}
 	} else {
-		checker := validator.NewChecker(validator.STRICT_ERROR)
-		checker.Validate(expr)
-		issues = checker.Issues()
+		issues = validator.ValidatePuppet(expr, validator.STRICT_ERROR).Issues()
 	}
 	return expr, issues
 }
