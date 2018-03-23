@@ -368,8 +368,8 @@ func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 		if epp {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
-		actual, issues := parseAndValidate(path, source, false, o...)
-		evaluator := e.example.Evaluator()
+		actual, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
+		evaluator := e.example.Evaluator(true)
 		if !hasError(issues) {
 			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
 			issues = append(issues, evalIssues...)
@@ -389,7 +389,7 @@ func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
 		if epp {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
-		_, issues := parseAndValidate(path, source, true, o...)
+		_, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
 		validateExpectations(assertions, v.expectations, issues, eval.NewArrayLogger())
 	}
 }
@@ -513,7 +513,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
-				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, eval.ERR, args)}}})
+				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
 
@@ -548,7 +548,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
-				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{&Expectation{makeExpectations(`Error`, eval.ERR, args)}}})
+				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
 }

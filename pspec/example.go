@@ -5,6 +5,7 @@ import (
 
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
+	"github.com/puppetlabs/go-evaluator/resource"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
 	"github.com/puppetlabs/go-parser/parser"
@@ -67,7 +68,7 @@ type (
 	}
 
 	source struct {
-		code string
+		code eval.PValue
 		epp  bool
 	}
 
@@ -93,7 +94,7 @@ type (
 	}
 )
 
-func pathContentAndEpp(src interface{}) (path, content string, epp bool) {
+func pathContentAndEpp(src interface{}) (path string, content eval.PValue, epp bool) {
 	switch src.(type) {
 	case *source:
 		s := src.(*source)
@@ -114,9 +115,10 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 		if epp {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
-		actual, issues := parseAndValidate(path, source, false, o...)
+		context.resolveLazyValue(source)
+		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)
-		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
+		actualResult, evalIssues := evaluate(e.example.Evaluator(true), actual, context.Scope())
 		failOnError(assertions, evalIssues)
 		assertions.AssertEquals(context.resolveLazyValue(e.expected), actualResult)
 	}
@@ -150,12 +152,12 @@ func newExamples(description string, given *Given, children []Node) *Examples {
 	return e
 }
 
-func (e *node) collectInputs(context *TestContext, inputs []Input) []Input {
+func (n *node) collectInputs(context *TestContext, inputs []Input) []Input {
 	pc := context.parent
 	if pc != nil {
 		inputs = pc.node.collectInputs(pc, inputs)
 	}
-	g := e.given
+	g := n.given
 	if g != nil {
 		inputs = append(inputs, g.inputs...)
 	}
@@ -177,9 +179,15 @@ func (e *Example) CreateTest() Test {
 	return &TestExecutable{testNode{e}, test}
 }
 
-func (e *Example) Evaluator() eval.Evaluator {
+func (e *Example) Evaluator(resources bool) eval.Evaluator {
 	if e.evaluator == nil {
-		e.evaluator = impl.NewEvaluator(eval.NewParentedLoader(eval.Puppet.EnvironmentLoader()), eval.NewArrayLogger())
+		loader := eval.NewParentedLoader(eval.Puppet.EnvironmentLoader())
+		logger := eval.NewArrayLogger()
+		if resources {
+			e.evaluator = resource.NewEvaluator(loader, logger)
+		} else {
+			e.evaluator = impl.NewEvaluator(loader, logger)
+		}
 	}
 	return e.evaluator
 }
@@ -210,7 +218,7 @@ func (p *ParseResult) CreateTest(actual interface{}) Executable {
 		if epp {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
-		actual, issues := parseAndValidate(path, source, false, o...)
+		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)
 
 		// Automatically strip off blocks that contain one statement
@@ -356,16 +364,23 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Given`,
 		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]Input{})))
+			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]Input{}), types.NewGoRuntimeType([]LazyValue{})))
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				inputs := make([]Input, argc)
 				for idx := 0; idx < argc; idx++ {
 					arg := args[idx]
-					if str, ok := arg.(*types.StringValue); ok {
-						inputs[idx] = &Source{[]*source{{str.String(), false}}}
-					} else {
-						inputs[idx] = arg.(*types.RuntimeValue).Interface().(Input)
+					switch arg.(type) {
+					case *types.StringValue:
+						inputs[idx] = &Source{[]*source{{arg, false}}}
+					default:
+						v := arg.(*types.RuntimeValue).Interface()
+						switch v.(type) {
+						case Input:
+							inputs[idx] = v.(Input)
+						default:
+							inputs[idx] = &Source{[]*source{{arg, false}}}
+						}
 					}
 				}
 				return types.WrapRuntime(&Given{inputs})
@@ -390,12 +405,12 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Source`,
 		func(d eval.Dispatch) {
-			d.RepeatedParam(`String`)
+			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
-					sources[idx] = &source{args[idx].String(), false}
+					sources[idx] = &source{args[idx], false}
 				}
 				return types.WrapRuntime(&Source{sources})
 			})
@@ -403,12 +418,12 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Epp_source`,
 		func(d eval.Dispatch) {
-			d.RepeatedParam(`String`)
+			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
-					sources[idx] = &source{args[idx].String(), true}
+					sources[idx] = &source{args[idx], true}
 				}
 				return types.WrapRuntime(&Source{sources})
 			})
@@ -417,9 +432,9 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Named_source`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Param(`String`)
+			d.Param2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
 			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
-				return types.WrapRuntime(&NamedSource{source{args[1].String(), false}, args[0].String()})
+				return types.WrapRuntime(&NamedSource{source{args[1], false}, args[0].String()})
 			})
 		})
 

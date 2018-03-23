@@ -50,7 +50,7 @@ type (
 	}
 )
 
-func (tc *TestContext) Get(l LazyValue) eval.PValue {
+func (tc *TestContext) Get(l LazyComputedValue) eval.PValue {
 	if v, ok := tc.accessedValues[l.Id()]; ok {
 		return v
 	}
@@ -115,7 +115,7 @@ func (tc *TestContext) registerTearDown(td Housekeeping) {
 func (tc *TestContext) resolveLazyValue(v eval.PValue) eval.PValue {
 	switch v.(type) {
 	case *types.RuntimeValue:
-		if lv, ok := v.(*types.RuntimeValue).Interface().(LazyValue); ok {
+		if lv, ok := v.(*types.RuntimeValue).Interface().(LazyComputedValue); ok {
 			return tc.Get(lv)
 		}
 		if lg, ok := v.(*types.RuntimeValue).Interface().(*LazyValueGet); ok {

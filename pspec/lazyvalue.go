@@ -15,6 +15,10 @@ import (
 type (
 	LazyValue interface {
 		Get(tc *TestContext) eval.PValue
+	}
+
+	LazyComputedValue interface {
+		LazyValue
 		Id() int64
 	}
 
@@ -76,7 +80,10 @@ func newGenericValue(content eval.PValue) *GenericValue {
 
 func (lg *LazyValueGet) Get(tc *TestContext) eval.PValue {
 	if lv, ok := tc.getLazyValue(lg.valueName); ok {
-		return tc.Get(lv)
+		if ng, ok := lv.(*LazyValueGet); ok {
+			return ng.Get(tc)
+		}
+		return tc.Get(lv.(LazyComputedValue))
 	}
 	panic(eval.Error(PSPEC_GET_OF_UNKNOWN_VARIABLE, issue.H{`name`: lg.valueName}))
 }
@@ -148,7 +155,10 @@ func (q *FormatValue) Get(tc *TestContext) eval.PValue {
 func (ls *LazyScope) Get(name string) (value eval.PValue, found bool) {
 	tc := ls.ctx
 	if lv, ok := tc.getLazyValue(name); ok {
-		return tc.Get(lv), true
+		if ng, ok := lv.(*LazyValueGet); ok {
+			return ng.Get(tc), true
+		}
+		return tc.Get(lv.(LazyComputedValue)), true
 	}
 	return ls.BasicScope.Get(name)
 }
