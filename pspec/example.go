@@ -326,8 +326,8 @@ func init() {
 		func(l eval.LocalTypes) {
 			l.Type2(`Given`, types.NewGoRuntimeType([]*Given{}))
 			l.Type2(`Let`, types.NewGoRuntimeType([]*LazyValueLet{}))
-			l.Type2(`Node`, types.NewGoRuntimeType([]Node{}))
-			l.Type(`Nodes`, `Variant[Node, Array[Nodes]]`)
+			l.Type2(`ExampleNode`, types.NewGoRuntimeType([]Node{}))
+			l.Type(`Nodes`, `Variant[ExampleNode, Array[Nodes]]`)
 		},
 		func(d eval.Dispatch) {
 			d.Param(`String`)
