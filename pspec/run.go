@@ -17,15 +17,21 @@ import (
 var baseLoader eval.DefiningLoader
 var baseLoaderLock sync.Mutex
 
-func RunPspecTests(t *testing.T, testRoot string) {
+func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.DefiningLoader) {
 	t.Helper()
+	pcore.InitializePuppet()
 	baseLoaderLock.Lock()
 	logger := eval.NewStdLogger()
 	if baseLoader == nil {
-		baseLoader = eval.NewParentedLoader(pcore.NewPcore(logger).SystemLoader())
+		baseLoader = eval.NewParentedLoader(eval.Puppet.SystemLoader())
 		impl.ResolveResolvables(baseLoader, logger)
 	}
 	baseLoaderLock.Unlock()
+
+	if initializer != nil {
+		eval.Puppet.ResolveResolvables(initializer())
+	}
+
 	loader := eval.NewParentedLoader(baseLoader)
 
 	testFiles := make([]string, 0, 64)

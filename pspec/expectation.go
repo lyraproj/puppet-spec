@@ -369,7 +369,7 @@ func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
 		actual, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
-		evaluator := e.example.Evaluator(true)
+		evaluator := e.example.Evaluator()
 		if !hasError(issues) {
 			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
 			issues = append(issues, evalIssues...)

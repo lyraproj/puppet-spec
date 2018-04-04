@@ -5,7 +5,6 @@ import (
 
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
-	"github.com/puppetlabs/go-evaluator/resource"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-parser/issue"
 	"github.com/puppetlabs/go-parser/parser"
@@ -118,7 +117,7 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 		context.resolveLazyValue(source)
 		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)
-		actualResult, evalIssues := evaluate(e.example.Evaluator(true), actual, context.Scope())
+		actualResult, evalIssues := evaluate(e.example.Evaluator(), actual, context.Scope())
 		failOnError(assertions, evalIssues)
 		assertions.AssertEquals(context.resolveLazyValue(e.expected), actualResult)
 	}
@@ -179,15 +178,9 @@ func (e *Example) CreateTest() Test {
 	return &TestExecutable{testNode{e}, test}
 }
 
-func (e *Example) Evaluator(resources bool) eval.Evaluator {
+func (e *Example) Evaluator() eval.Evaluator {
 	if e.evaluator == nil {
-		loader := eval.NewParentedLoader(eval.Puppet.EnvironmentLoader())
-		logger := eval.NewArrayLogger()
-		if resources {
-			e.evaluator = resource.NewEvaluator(loader, logger)
-		} else {
-			e.evaluator = impl.NewEvaluator(loader, logger)
-		}
+		e.evaluator = eval.Puppet.NewEvaluatorWithLogger(eval.NewArrayLogger())
 	}
 	return e.evaluator
 }
