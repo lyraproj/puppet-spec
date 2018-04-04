@@ -169,7 +169,7 @@ func safeHousekeeping(h Housekeeping) {
 	defer func() {
 		if err := recover(); err != nil {
 			if e, ok := err.(error); ok {
-				eval.CurrentContext().Logger().Log(eval.ERR, types.WrapString(e.Error()))
+				eval.Puppet.Logger().Log(eval.ERR, types.WrapString(e.Error()))
 			} else {
 				panic(err)
 			}

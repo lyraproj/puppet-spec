@@ -85,7 +85,7 @@ func (lg *LazyValueGet) Get(tc *TestContext) eval.PValue {
 		}
 		return tc.Get(lv.(LazyComputedValue))
 	}
-	panic(eval.Error(PSPEC_GET_OF_UNKNOWN_VARIABLE, issue.H{`name`: lg.valueName}))
+	panic(eval.Error(nil, PSPEC_GET_OF_UNKNOWN_VARIABLE, issue.H{`name`: lg.valueName}))
 }
 
 func (gv *GenericValue) Get(tc *TestContext) eval.PValue {
@@ -105,7 +105,7 @@ func (dv *DirectoryValue) Get(tc *TestContext) eval.PValue {
 	}
 	dir, ok := tc.resolveLazyValue(dv.content).(*types.HashValue)
 	if !ok {
-		panic(eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`}))
+		panic(eval.Error(nil, PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Directory`}))
 	}
 	makeDirectories(tmpDir, dir)
 	tc.registerTearDown(func() {
@@ -149,7 +149,7 @@ func (q *FormatValue) Get(tc *TestContext) eval.PValue {
 	if format, ok := tc.resolveLazyValue(q.format).(*types.StringValue); ok {
 		return types.WrapString(types.PuppetSprintf(format.String(), tc.resolveLazyValues(types.WrapArray(q.arguments))...))
 	}
-	panic(eval.Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
+	panic(eval.Error(nil, PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
 }
 
 func (ls *LazyScope) Get(name string) (value eval.PValue, found bool) {
@@ -187,7 +187,7 @@ func writeFileValue(path string, value eval.PValue) {
 	case *types.BinaryValue:
 		err = ioutil.WriteFile(path, value.(*types.BinaryValue).Bytes(), 0644)
 	default:
-		panic(eval.Error(PSPEC_INVALID_FILE_CONTENT, issue.H{`value`: value}))
+		panic(eval.Error(nil, PSPEC_INVALID_FILE_CONTENT, issue.H{`value`: value}))
 	}
 	if err != nil {
 		panic(err)
