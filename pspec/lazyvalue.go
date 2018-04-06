@@ -198,7 +198,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Directory`,
 		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(newDirectoryValue(args[0]))
 			})
 		})
@@ -206,7 +206,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::File`,
 		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(newFileValue(args[0]))
 			})
 		})
@@ -215,7 +215,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`Any`)
 			d.RepeatedParam(`Any`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(newFormatValue(args[0], args[1:]))
 			})
 		})
@@ -223,7 +223,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Get`,
 		func(d eval.Dispatch) {
 			d.Param(`String[1]`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&LazyValueGet{args[0].String()})
 			})
 		})
@@ -232,7 +232,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`String[1]`)
 			d.Param(`Any`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				v := args[1]
 				var lv LazyValue
 				r, ok := v.(*types.RuntimeValue)

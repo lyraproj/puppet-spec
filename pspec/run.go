@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/puppetlabs/go-evaluator/eval"
@@ -14,25 +13,15 @@ import (
 	"github.com/puppetlabs/go-parser/parser"
 )
 
-var baseLoader eval.DefiningLoader
-var baseLoaderLock sync.Mutex
-
 func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.DefiningLoader) {
 	t.Helper()
 	pcore.InitializePuppet()
-	baseLoaderLock.Lock()
-	logger := eval.NewStdLogger()
-	if baseLoader == nil {
-		baseLoader = eval.NewParentedLoader(eval.Puppet.SystemLoader())
-		impl.ResolveResolvables(baseLoader, logger)
-	}
-	baseLoaderLock.Unlock()
 
 	if initializer != nil {
-		eval.Puppet.ResolveResolvables(initializer())
+		eval.Puppet.Do(func(c eval.Context) {
+			c.WithLoader(initializer()).ResolveResolvables()
+		})
 	}
-
-	loader := eval.NewParentedLoader(baseLoader)
 
 	testFiles := make([]string, 0, 64)
 	err := filepath.Walk(testRoot, func(path string, info os.FileInfo, err error) error {
@@ -48,13 +37,15 @@ func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.Defini
 		return
 	}
 	tests := make([]Test, 0, 100)
+	se := NewSpecEvaluator()
+	c := impl.NewContext(se, eval.NewParentedLoader(eval.Puppet.SystemLoader()))
 	for _, testFile := range testFiles {
-		tests = append(tests, NewSpecEvaluator(loader).CreateTests(parseTestContents(t, testFile), loader)...)
+		tests = append(tests, se.CreateTests(c, parseTestContents(t, testFile))...)
 	}
-	runTests(t, loader, tests, nil)
+	runTests(t, tests, nil)
 }
 
-func runTests(t *testing.T, loader eval.Loader, tests []Test, parentContext *TestContext) {
+func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
 	t.Helper()
 
 	for _, test := range tests {
@@ -62,8 +53,7 @@ func runTests(t *testing.T, loader eval.Loader, tests []Test, parentContext *Tes
 			parent:         parentContext,
 			tearDowns:      make([]Housekeeping, 0),
 			accessedValues: make(map[int64]eval.PValue, 32),
-			node:           test.Node(),
-			loader:         loader}
+			node:           test.Node()}
 
 		if testExec, ok := test.(*TestExecutable); ok {
 			t.Run(testExec.Name(), func(s *testing.T) {
@@ -71,7 +61,7 @@ func runTests(t *testing.T, loader eval.Loader, tests []Test, parentContext *Tes
 			})
 		} else if testGroup, ok := test.(*TestGroup); ok {
 			t.Run(testGroup.Name(), func(s *testing.T) {
-				runTests(s, loader, testGroup.Tests(), ctx)
+				runTests(s, testGroup.Tests(), ctx)
 			})
 		}
 	}

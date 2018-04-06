@@ -31,8 +31,8 @@ type (
 		accessedValues map[int64]eval.PValue
 		tearDowns      []Housekeeping
 		scope          eval.Scope
-		loader         eval.Loader
 		parserOptions  eval.KeyedValue
+		evalContext    eval.Context
 	}
 
 	testNode struct {
@@ -58,6 +58,10 @@ func (tc *TestContext) Get(l LazyComputedValue) eval.PValue {
 	v := l.Get(tc)
 	tc.accessedValues[l.Id()] = v
 	return v
+}
+
+func (tc *TestContext) EvalContext() eval.Context {
+	return impl.NewContext2(eval.Puppet.NewEvaluatorWithLogger(eval.NewArrayLogger()), eval.NewParentedLoader(eval.Puppet.EnvironmentLoader()), tc.newLazyScope())
 }
 
 func (tc *TestContext) ParserOptions() []parser.Option {
@@ -87,7 +91,7 @@ func (tc *TestContext) ParserOptions() []parser.Option {
 }
 
 func (tc *TestContext) newLazyScope() *LazyScope {
-	return &LazyScope{*tc.scope.(*impl.BasicScope), tc}
+	return &LazyScope{*tc.Scope().(*impl.BasicScope), tc}
 }
 
 func (tc *TestContext) Scope() eval.Scope {
@@ -197,9 +201,9 @@ func parseAndValidate(name, source string, singleExpression bool, o ...parser.Op
 	return expr, issues
 }
 
-func evaluate(evaluator eval.Evaluator, expr parser.Expression, scope eval.Scope) (eval.PValue, []*issue.Reported) {
-	evaluator.AddDefinitions(expr)
-	result, i := evaluator.Evaluate(expr, scope, nil)
+func evaluate(c eval.Context, expr parser.Expression) (eval.PValue, []*issue.Reported) {
+	c.AddDefinitions(expr)
+	result, i := c.Evaluator().Evaluate(c, expr)
 	issues := []*issue.Reported{}
 	if i != nil {
 		issues = []*issue.Reported{i}

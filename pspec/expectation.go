@@ -369,12 +369,12 @@ func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
 		actual, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
-		evaluator := e.example.Evaluator()
+		c := tc.EvalContext()
 		if !hasError(issues) {
-			_, evalIssues := evaluate(evaluator, actual, tc.Scope())
+			_, evalIssues := evaluate(c, actual)
 			issues = append(issues, evalIssues...)
 		}
-		validateExpectations(assertions, e.expectations, issues, evaluator.Logger().(*eval.ArrayLogger))
+		validateExpectations(assertions, e.expectations, issues, c.Logger().(*eval.ArrayLogger))
 	}
 }
 
@@ -413,7 +413,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Exclude`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&Exclude{makeMatches(`Exclude`, args)})
 			})
 		})
@@ -421,7 +421,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Include`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&Include{makeMatches(`Include`, args)})
 			})
 		})
@@ -429,7 +429,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Contain`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&StringMatch{true, args[0].String()})
 			})
 		})
@@ -438,7 +438,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param2(types.NewGoRuntimeType([]*issue.Issue{}))
 			d.OptionalParam(`Hash[String,Any]`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				var argsMap *hash.StringHash
 				if len(args) > 1 {
 					argsMap = hash.NewStringHash(5)
@@ -453,7 +453,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Match`,
 		func(d eval.Dispatch) {
 			d.Param2(MATCH_ARG_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(makeMatches(`Match`, args)[0])
 			})
 		})
@@ -461,7 +461,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Error`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&Expectation{makeExpectations(`Error`, eval.ERR, args)})
 			})
 		})
@@ -469,7 +469,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Notice`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&Expectation{makeExpectations(`Notice`, eval.NOTICE, args)})
 			})
 		})
@@ -477,14 +477,14 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Warning`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&Expectation{makeExpectations(`Warning`, eval.WARNING, args)})
 			})
 		})
 
 	eval.NewGoConstructor(`PSpec::Evaluates_ok`,
 		func(d eval.Dispatch) {
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
@@ -492,7 +492,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Evaluates_to`,
 		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&EvaluationResult{nil, args[0]})
 			})
 		})
@@ -500,7 +500,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Evaluates_with`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				results := make([]*Expectation, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -512,7 +512,7 @@ func init() {
 
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
@@ -520,14 +520,14 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Parses_to`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&ParseResult{location: c.StackTop(), expected: args[0].String()})
 			})
 		})
 
 	eval.NewGoConstructor(`PSpec::Validates_ok`,
 		func(d eval.Dispatch) {
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
@@ -535,7 +535,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Validates_with`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				argc := len(args)
 				results := make([]*Expectation, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -547,7 +547,7 @@ func init() {
 
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.EvalContext, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
