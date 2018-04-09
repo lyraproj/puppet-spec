@@ -17,7 +17,6 @@ type (
 
 	specEval struct {
 		evaluator eval.Evaluator
-		nodes     []Node
 		path      []parser.Expression
 	}
 )
@@ -54,8 +53,10 @@ var PSPEC_QREFS = map[string]string{
 	`Unindent`:       `PSpec::Unindent`,
 }
 
+const TEST_NODES = `testNodes`
+
 func NewSpecEvaluator() SpecEvaluator {
-	specEval := &specEval{nodes: make([]Node, 0), path: make([]parser.Expression, 0)}
+	specEval := &specEval{path: make([]parser.Expression, 0)}
 	specEval.evaluator = impl.NewOverriddenEvaluator(eval.NewStdLogger(), specEval)
 	return specEval
 }
@@ -73,12 +74,15 @@ func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, a
 }
 
 func (s *specEval) CreateTests(c eval.Context, expression parser.Expression) []Test {
+	c.Set(TEST_NODES, make([]Node, 0))
 	c.AddDefinitions(expression)
 	if _, err := s.Evaluate(c, expression); err != nil {
 		panic(err)
 	}
-	tests := make([]Test, len(s.nodes))
-	for i, node := range s.nodes {
+	ns, _ := c.Get(TEST_NODES)
+	nodes := ns.([]Node)
+	tests := make([]Test, len(nodes))
+	for i, node := range nodes {
 		tests[i] = node.CreateTest()
 	}
 	return tests
@@ -97,8 +101,9 @@ func (s *specEval) Eval(expression parser.Expression, ctx eval.Context) eval.PVa
 	}
 }
 
-func (s *specEval) addNode(n Node) {
-	s.nodes = append(s.nodes, n)
+func addNode(c eval.Context, n Node) {
+	nodes, _ := c.Get(TEST_NODES)
+	c.Set(TEST_NODES, append(nodes.([]Node), n))
 }
 
 func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression, ctx eval.Context) eval.PValue {
@@ -120,7 +125,7 @@ func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression, ctx eval.C
 			if rt, ok := result.(*types.RuntimeValue); ok {
 				var n Node
 				if n, ok = rt.Interface().(Node); ok {
-					s.addNode(n)
+					addNode(ctx, n)
 				}
 			}
 		}
