@@ -235,7 +235,7 @@ func (im *IssueMatch) MatchIssue(issue *issue.Reported) bool {
 			}
 			return false
 		} else {
-			if !eval.Equals(a, eval.WrapUnknown(v)) {
+			if !eval.Equals(a, eval.Wrap(v)) {
 				return false
 			}
 		}
