@@ -4,7 +4,7 @@ import (
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
 	"github.com/puppetlabs/go-evaluator/types"
-	"github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-parser/parser"
 	"github.com/puppetlabs/go-parser/validator"
 )
@@ -186,27 +186,27 @@ func (v *TestGroup) Tests() []Test {
 	return v.tests
 }
 
-func parseAndValidate(name, source string, singleExpression bool, o ...parser.Option) (parser.Expression, []*issue.Reported) {
+func parseAndValidate(name, source string, singleExpression bool, o ...parser.Option) (parser.Expression, []issue.Reported) {
 	expr, err := parser.CreateParser(o...).Parse(name, source, singleExpression)
-	var issues []*issue.Reported
+	var issues []issue.Reported
 	if err != nil {
-		i, ok := err.(*issue.Reported)
+		i, ok := err.(issue.Reported)
 		if !ok {
 			panic(err.Error())
 		}
-		issues = []*issue.Reported{i}
+		issues = []issue.Reported{i}
 	} else {
 		issues = validator.ValidatePuppet(expr, validator.STRICT_ERROR).Issues()
 	}
 	return expr, issues
 }
 
-func evaluate(c eval.Context, expr parser.Expression) (eval.PValue, []*issue.Reported) {
+func evaluate(c eval.Context, expr parser.Expression) (eval.PValue, []issue.Reported) {
 	c.AddDefinitions(expr)
 	result, i := c.Evaluator().Evaluate(c, expr)
-	issues := []*issue.Reported{}
+	issues := []issue.Reported{}
 	if i != nil {
-		issues = []*issue.Reported{i}
+		issues = []issue.Reported{i}
 	}
 	return result, issues
 }

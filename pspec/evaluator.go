@@ -4,7 +4,7 @@ import (
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
 	"github.com/puppetlabs/go-evaluator/types"
-	"github.com/puppetlabs/go-parser/issue"
+	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-parser/parser"
 )
 
@@ -61,7 +61,7 @@ func NewSpecEvaluator() SpecEvaluator {
 	return specEval
 }
 
-func (s *specEval) Evaluate(c eval.Context, expression parser.Expression) (eval.PValue, *issue.Reported) {
+func (s *specEval) Evaluate(c eval.Context, expression parser.Expression) (eval.PValue, issue.Reported) {
 	return s.evaluator.Evaluate(c, expression)
 }
 
@@ -69,7 +69,7 @@ func (s *specEval) Logger() eval.Logger {
 	return s.evaluator.Logger()
 }
 
-func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, args issue.H) *issue.Reported {
+func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, args issue.H) issue.Reported {
 	return issue.NewReported(issueCode, issue.SEVERITY_ERROR, args, semantic)
 }
 
@@ -152,7 +152,7 @@ func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFuncti
 	return s.evaluator.Eval(call, c)
 }
 
-func hasError(issues []*issue.Reported) bool {
+func hasError(issues []issue.Reported) bool {
 	for _, i := range issues {
 		if i.Severity() == issue.SEVERITY_ERROR {
 			return true
@@ -161,7 +161,7 @@ func hasError(issues []*issue.Reported) bool {
 	return false
 }
 
-func failOnError(assertions Assertions, issues []*issue.Reported) {
+func failOnError(assertions Assertions, issues []issue.Reported) {
 	for _, i := range issues {
 		if i.Severity() == issue.SEVERITY_ERROR {
 			assertions.Fail(i.Error())

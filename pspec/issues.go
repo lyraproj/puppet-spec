@@ -1,6 +1,6 @@
 package pspec
 
-import "github.com/puppetlabs/go-parser/issue"
+import "github.com/puppetlabs/go-issues/issue"
 
 const (
 	PSPEC_GET_OF_UNKNOWN_VARIABLE = `PSPEC_GET_OF_UNKNOWN_VARIABLE`
