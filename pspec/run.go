@@ -18,9 +18,13 @@ func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.Defini
 	pcore.InitializePuppet()
 
 	if initializer != nil {
-		eval.Puppet.Do(func(c eval.Context) {
+		err := eval.Puppet.Do(func(c eval.Context) error {
 			c.WithLoader(initializer()).ResolveResolvables()
+			return nil
 		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	testFiles := make([]string, 0, 64)
