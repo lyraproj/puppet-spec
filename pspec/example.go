@@ -280,11 +280,11 @@ func init() {
 		func(l eval.LocalTypes) {
 			l.Type2(`Given`, types.NewGoRuntimeType([]*Given{}))
 			l.Type2(`Let`, types.NewGoRuntimeType([]*LazyValueLet{}))
-			l.Type2(`Result`, types.NewGoRuntimeType([]Result{}))
+			l.Type2(`SpecResult`, types.NewGoRuntimeType([]Result{}))
 		},
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.RepeatedParam(`Variant[Let,Given,Result]`)
+			d.RepeatedParam(`Variant[Let,Given,SpecResult]`)
 			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
 				lets := make([]*LazyValueLet, 0)
 				var given *Given
