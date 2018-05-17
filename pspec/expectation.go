@@ -287,9 +287,9 @@ var ISSUE_TYPE = types.NewGoRuntimeType([]issue.Issue{})
 var INCLUDE_TYPE = types.NewGoRuntimeType([]*Include{})
 var EXCLUDE_TYPE = types.NewGoRuntimeType([]*Exclude{})
 var EXPECTATION_TYPE = types.NewGoRuntimeType([]*Expectation{})
-var MATCH_ARG_TYPE = types.NewVariantType([]eval.PType{types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE})
-var MATCHERS_TYPE = types.NewVariantType([]eval.PType{types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE})
-var EXPECTATIONS_TYPE = types.NewVariantType([]eval.PType{types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE, INCLUDE_TYPE, EXCLUDE_TYPE})
+var MATCH_ARG_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE)
+var MATCHERS_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE)
+var EXPECTATIONS_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE, INCLUDE_TYPE, EXCLUDE_TYPE)
 
 func makeMatches(name string, args []eval.PValue) (result []Match) {
 	result = make([]Match, len(args))
