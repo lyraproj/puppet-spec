@@ -61,6 +61,10 @@ func NewSpecEvaluator() SpecEvaluator {
 	return specEval
 }
 
+func (s *specEval) CallFunction(name string, args []eval.PValue, call parser.CallExpression, c eval.Context) eval.PValue {
+	return s.evaluator.CallFunction(name, args, call, c)
+}
+
 func (s *specEval) Evaluate(c eval.Context, expression parser.Expression) (eval.PValue, issue.Reported) {
 	return s.evaluator.Evaluate(c, expression)
 }

@@ -61,7 +61,7 @@ func (tc *TestContext) Get(l LazyComputedValue) eval.PValue {
 }
 
 func (tc *TestContext) EvalContext() eval.Context {
-	return impl.NewContext(eval.Puppet.NewEvaluatorWithLogger(eval.NewArrayLogger()), eval.NewParentedLoader(eval.Puppet.EnvironmentLoader()), tc.newLazyScope())
+	return impl.NewContext(eval.Puppet.NewEvaluatorWithLogger(eval.NewArrayLogger()), eval.NewParentedLoader(eval.Puppet.EnvironmentLoader())).WithScope(tc.newLazyScope())
 }
 
 func (tc *TestContext) ParserOptions() []parser.Option {
