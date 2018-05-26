@@ -163,6 +163,10 @@ func (ls *LazyScope) Get(name string) (value eval.PValue, found bool) {
 	return ls.BasicScope.Get(name)
 }
 
+func (ls *LazyScope) State(name string) eval.VariableState {
+	return ls.BasicScope.State(name)
+}
+
 func makeDirectories(parent string, hash *types.HashValue) {
 	hash.EachPair(func(key, value eval.PValue) {
 		name := key.String()
