@@ -245,7 +245,7 @@ func (s *ScopeInput) CreateTests(expected Result) []Executable {
 		if !ok {
 			eval.Error(nil, PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Scope`})
 		}
-		tc.scope = impl.NewScope2(scope)
+		tc.scope = impl.NewScope2(scope, false)
 	}}
 }
 

@@ -96,7 +96,7 @@ func (tc *TestContext) newLazyScope() *LazyScope {
 
 func (tc *TestContext) Scope() eval.Scope {
 	if tc.scope == nil {
-		tc.scope = impl.NewScope()
+		tc.scope = impl.NewScope(false)
 	}
 	return tc.scope
 }
