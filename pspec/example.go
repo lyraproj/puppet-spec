@@ -101,7 +101,7 @@ func pathContentAndEpp(src interface{}) (path string, content eval.PValue, epp b
 		ns := src.(*NamedSource)
 		return ns.name, ns.code, ns.epp
 	default:
-		panic(eval.Error(nil, eval.EVAL_FAILURE, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, src)}))
+		panic(eval.Error(eval.EVAL_FAILURE, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, src)}))
 	}
 }
 
@@ -230,7 +230,7 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
 		settings, ok := tc.resolveLazyValue(s.settings).(*types.HashValue)
 		if !ok {
-			eval.Error(nil, PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Settings`})
+			eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Settings`})
 		}
 		p := eval.Puppet
 		settings.EachPair(func(key, value eval.PValue) {
@@ -243,7 +243,7 @@ func (s *ScopeInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
 		scope, ok := tc.resolveLazyValue(s.scope).(*types.HashValue)
 		if !ok {
-			eval.Error(nil, PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Scope`})
+			eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Scope`})
 		}
 		tc.scope = impl.NewScope2(scope, false)
 	}}
