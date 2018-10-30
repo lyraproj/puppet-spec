@@ -61,11 +61,11 @@ func NewSpecEvaluator() SpecEvaluator {
 	return specEval
 }
 
-func (s *specEval) CallFunction(name string, args []eval.PValue, call parser.CallExpression, c eval.Context) eval.PValue {
+func (s *specEval) CallFunction(name string, args []eval.Value, call parser.CallExpression, c eval.Context) eval.Value {
 	return s.evaluator.CallFunction(name, args, call, c)
 }
 
-func (s *specEval) Evaluate(c eval.Context, expression parser.Expression) (eval.PValue, issue.Reported) {
+func (s *specEval) Evaluate(c eval.Context, expression parser.Expression) (eval.Value, issue.Reported) {
 	return s.evaluator.Evaluate(c, expression)
 }
 
@@ -92,7 +92,7 @@ func (s *specEval) CreateTests(c eval.Context, expression parser.Expression) []T
 	return tests
 }
 
-func (s *specEval) Eval(expression parser.Expression, ctx eval.Context) eval.PValue {
+func (s *specEval) Eval(expression parser.Expression, ctx eval.Context) eval.Value {
 	switch expression.(type) {
 	case *parser.BlockExpression:
 		return s.eval_BlockExpression(expression.(*parser.BlockExpression), ctx)
@@ -110,9 +110,9 @@ func addNode(c eval.Context, n Node) {
 	c.Set(TEST_NODES, append(nodes.([]Node), n))
 }
 
-func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression, ctx eval.Context) eval.PValue {
+func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression, ctx eval.Context) eval.Value {
 	stmts := expr.Statements()
-	result := eval.PValue(eval.UNDEF)
+	result := eval.Value(eval.UNDEF)
 	oldPath := s.path
 
 	p := make([]parser.Expression, len(s.path), len(s.path)+1)
@@ -137,7 +137,7 @@ func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression, ctx eval.C
 	return result
 }
 
-func (s *specEval) eval_QualifiedReference(qr *parser.QualifiedReference, ctx eval.Context) eval.PValue {
+func (s *specEval) eval_QualifiedReference(qr *parser.QualifiedReference, ctx eval.Context) eval.Value {
 	if i, ok := issue.IssueForCode2(issue.Code(qr.Name())); ok {
 		return types.WrapRuntime(i)
 	}
@@ -147,7 +147,7 @@ func (s *specEval) eval_QualifiedReference(qr *parser.QualifiedReference, ctx ev
 	return s.evaluator.Eval(qr, ctx)
 }
 
-func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFunctionExpression, c eval.Context) eval.PValue {
+func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFunctionExpression, c eval.Context) eval.Value {
 	if qr, ok := call.Functor().(*parser.QualifiedReference); ok {
 		if p, ok := PSPEC_QREFS[qr.Name()]; ok {
 			call = call.WithFunctor(qr.WithName(p))

@@ -291,7 +291,7 @@ var MATCH_ARG_TYPE = types.NewVariantType(types.DefaultStringType(), types.Defau
 var MATCHERS_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE)
 var EXPECTATIONS_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE, INCLUDE_TYPE, EXCLUDE_TYPE)
 
-func makeMatches(name string, args []eval.PValue) (result []Match) {
+func makeMatches(name string, args []eval.Value) (result []Match) {
 	result = make([]Match, len(args))
 	for ix, arg := range args {
 		switch arg.(type) {
@@ -317,7 +317,7 @@ func makeMatches(name string, args []eval.PValue) (result []Match) {
 	return
 }
 
-func makeIssueArgMatch(arg eval.PValue) interface{} {
+func makeIssueArgMatch(arg eval.Value) interface{} {
 	switch arg.(type) {
 	case *types.StringValue:
 		return &StringMatch{false, arg.String()}
@@ -329,7 +329,7 @@ func makeIssueArgMatch(arg eval.PValue) interface{} {
 	return arg
 }
 
-func makeExpectations(name string, level eval.LogLevel, args []eval.PValue) (result []*LevelExpectation) {
+func makeExpectations(name string, level eval.LogLevel, args []eval.Value) (result []*LevelExpectation) {
 	result = make([]*LevelExpectation, len(args))
 	for ix, arg := range args {
 		switch arg.(type) {
@@ -413,7 +413,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Exclude`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&Exclude{makeMatches(`Exclude`, args)})
 			})
 		})
@@ -421,7 +421,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Include`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(MATCHERS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&Include{makeMatches(`Include`, args)})
 			})
 		})
@@ -429,7 +429,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Contain`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&StringMatch{true, args[0].String()})
 			})
 		})
@@ -438,11 +438,11 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param2(types.NewGoRuntimeType([]issue.Issue{}))
 			d.OptionalParam(`Hash[String,Any]`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				var argsMap *hash.StringHash
 				if len(args) > 1 {
 					argsMap = hash.NewStringHash(5)
-					args[1].(*types.HashValue).EachPair(func(k, v eval.PValue) {
+					args[1].(*types.HashValue).EachPair(func(k, v eval.Value) {
 						argsMap.Put(k.String(), makeIssueArgMatch(v))
 					})
 				}
@@ -453,7 +453,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Match`,
 		func(d eval.Dispatch) {
 			d.Param2(MATCH_ARG_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(makeMatches(`Match`, args)[0])
 			})
 		})
@@ -461,7 +461,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Error`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&Expectation{makeExpectations(`Error`, eval.ERR, args)})
 			})
 		})
@@ -469,7 +469,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Notice`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&Expectation{makeExpectations(`Notice`, eval.NOTICE, args)})
 			})
 		})
@@ -477,14 +477,14 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Warning`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&Expectation{makeExpectations(`Warning`, eval.WARNING, args)})
 			})
 		})
 
 	eval.NewGoConstructor(`PSpec::Evaluates_ok`,
 		func(d eval.Dispatch) {
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
@@ -492,7 +492,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Evaluates_to`,
 		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&EvaluationResult{nil, args[0]})
 			})
 		})
@@ -500,7 +500,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Evaluates_with`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				results := make([]*Expectation, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -512,7 +512,7 @@ func init() {
 
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&EvaluatesWith{nil, []*Expectation{{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})
@@ -520,14 +520,14 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Parses_to`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&ParseResult{location: c.StackTop(), expected: args[0].String()})
 			})
 		})
 
 	eval.NewGoConstructor(`PSpec::Validates_ok`,
 		func(d eval.Dispatch) {
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{EXPECT_OK}})
 			})
 		})
@@ -535,7 +535,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Validates_with`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATION_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				results := make([]*Expectation, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -547,7 +547,7 @@ func init() {
 
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(EXPECTATIONS_TYPE)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&ValidatesWith{nil, []*Expectation{{makeExpectations(`Error`, eval.ERR, args)}}})
 			})
 		})

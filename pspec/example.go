@@ -30,7 +30,7 @@ type (
 	}
 
 	ResultEntry interface {
-		Match() eval.PValue
+		Match() eval.Value
 	}
 
 	node struct {
@@ -62,11 +62,11 @@ type (
 
 	EvaluationResult struct {
 		example  *Example
-		expected eval.PValue
+		expected eval.Value
 	}
 
 	source struct {
-		code eval.PValue
+		code eval.Value
 		epp  bool
 	}
 
@@ -80,19 +80,19 @@ type (
 	}
 
 	ParserOptions struct {
-		options eval.KeyedValue
+		options eval.OrderedMap
 	}
 
 	SettingsInput struct {
-		settings eval.PValue
+		settings eval.Value
 	}
 
 	ScopeInput struct {
-		scope eval.PValue
+		scope eval.Value
 	}
 )
 
-func pathContentAndEpp(src interface{}) (path string, content eval.PValue, epp bool) {
+func pathContentAndEpp(src interface{}) (path string, content eval.Value, epp bool) {
 	switch src.(type) {
 	case *source:
 		s := src.(*source)
@@ -233,7 +233,7 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 			eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Settings`})
 		}
 		p := eval.Puppet
-		settings.EachPair(func(key, value eval.PValue) {
+		settings.EachPair(func(key, value eval.Value) {
 			p.Set(key.String(), value)
 		})
 	}}
@@ -285,7 +285,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`String`)
 			d.RepeatedParam(`Variant[Let,Given,SpecResult]`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				lets := make([]*LazyValueLet, 0)
 				var given *Given
 				results := make([]Result, 0)
@@ -324,10 +324,10 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`String`)
 			d.RepeatedParam(`Variant[Nodes,Let,Given]`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				lets := make([]*LazyValueLet, 0)
 				var given *Given
-				others := make([]eval.PValue, 0)
+				others := make([]eval.Value, 0)
 				for _, arg := range args[1:] {
 					if rt, ok := arg.(*types.RuntimeValue); ok {
 						if l, ok := rt.Interface().(*LazyValueLet); ok {
@@ -350,7 +350,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Given`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]Input{}), types.NewGoRuntimeType([]LazyValue{})))
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				inputs := make([]Input, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -375,7 +375,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Settings`,
 		func(d eval.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&SettingsInput{args[0]})
 			})
 		})
@@ -383,7 +383,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Scope`,
 		func(d eval.Dispatch) {
 			d.Param(`Hash[Pattern[/\A[a-z_]\w*\z/],Any]`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&ScopeInput{args[0]})
 			})
 		})
@@ -391,7 +391,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Source`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -404,7 +404,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Epp_source`,
 		func(d eval.Dispatch) {
 			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -418,7 +418,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`String`)
 			d.Param2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&NamedSource{source{args[1], false}, args[0].String()})
 			})
 		})
@@ -426,7 +426,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Unindent`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapString(testutils.Unindent(args[0].String()))
 			})
 		})
@@ -434,15 +434,15 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Parser_options`,
 		func(d eval.Dispatch) {
 			d.Param(`Hash[Pattern[/[a-z_]*/],Data]`)
-			d.Function(func(c eval.Context, args []eval.PValue) eval.PValue {
+			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&ParserOptions{args[0].(*types.HashValue)})
 			})
 		})
 }
 
-func splatNodes(args eval.IndexedValue) []Node {
+func splatNodes(args eval.List) []Node {
 	nodes := make([]Node, 0)
-	args.Each(func(arg eval.PValue) {
+	args.Each(func(arg eval.Value) {
 		if rv, ok := arg.(*types.RuntimeValue); ok {
 			nodes = append(nodes, rv.Interface().(Node))
 		} else {

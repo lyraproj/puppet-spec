@@ -28,10 +28,10 @@ type (
 	TestContext struct {
 		parent         *TestContext
 		node           Node
-		accessedValues map[int64]eval.PValue
+		accessedValues map[int64]eval.Value
 		tearDowns      []Housekeeping
 		scope          eval.Scope
-		parserOptions  eval.KeyedValue
+		parserOptions  eval.OrderedMap
 		evalContext    eval.Context
 	}
 
@@ -50,7 +50,7 @@ type (
 	}
 )
 
-func (tc *TestContext) Get(l LazyComputedValue) eval.PValue {
+func (tc *TestContext) Get(l LazyComputedValue) eval.Value {
 	if v, ok := tc.accessedValues[l.Id()]; ok {
 		return v
 	}
@@ -70,7 +70,7 @@ func (tc *TestContext) ParserOptions() []parser.Option {
 		o = append(o, tc.parent.ParserOptions()...)
 	}
 	if tc.parserOptions != nil {
-		tc.parserOptions.EachPair(func(k, v eval.PValue) {
+		tc.parserOptions.EachPair(func(k, v eval.Value) {
 			switch k.String() {
 			case `tasks`:
 				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
@@ -116,7 +116,7 @@ func (tc *TestContext) registerTearDown(td Housekeeping) {
 	tc.tearDowns = append(tc.tearDowns, td)
 }
 
-func (tc *TestContext) resolveLazyValue(v eval.PValue) eval.PValue {
+func (tc *TestContext) resolveLazyValue(v eval.Value) eval.Value {
 	switch v.(type) {
 	case *types.RuntimeValue:
 		if lv, ok := v.(*types.RuntimeValue).Interface().(LazyComputedValue); ok {
@@ -129,7 +129,7 @@ func (tc *TestContext) resolveLazyValue(v eval.PValue) eval.PValue {
 	case *types.HashValue:
 		oe := v.(*types.HashValue)
 		ne := make([]*types.HashEntry, oe.Len())
-		oe.EachWithIndex(func(v eval.PValue, i int) {
+		oe.EachWithIndex(func(v eval.Value, i int) {
 			e := v.(*types.HashEntry)
 			ne[i] = types.WrapHashEntry(tc.resolveLazyValue(e.Key()), tc.resolveLazyValue(e.Value()))
 		})
@@ -141,9 +141,9 @@ func (tc *TestContext) resolveLazyValue(v eval.PValue) eval.PValue {
 	}
 }
 
-func (tc *TestContext) resolveLazyValues(values eval.IndexedValue) []eval.PValue {
-	resolved := make([]eval.PValue, values.Len())
-	values.EachWithIndex(func(e eval.PValue, i int) {
+func (tc *TestContext) resolveLazyValues(values eval.List) []eval.Value {
+	resolved := make([]eval.Value, values.Len())
+	values.EachWithIndex(func(e eval.Value, i int) {
 		resolved[i] = tc.resolveLazyValue(e)
 	})
 	return resolved
@@ -201,7 +201,7 @@ func parseAndValidate(name, source string, singleExpression bool, o ...parser.Op
 	return expr, issues
 }
 
-func evaluate(c eval.Context, expr parser.Expression) (eval.PValue, []issue.Reported) {
+func evaluate(c eval.Context, expr parser.Expression) (eval.Value, []issue.Reported) {
 	c.AddDefinitions(expr)
 	result, i := c.Evaluator().Evaluate(c, expr)
 	issues := []issue.Reported{}

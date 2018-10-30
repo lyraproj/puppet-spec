@@ -56,7 +56,7 @@ func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
 		ctx := &TestContext{
 			parent:         parentContext,
 			tearDowns:      make([]Housekeeping, 0),
-			accessedValues: make(map[int64]eval.PValue, 32),
+			accessedValues: make(map[int64]eval.Value, 32),
 			node:           test.Node()}
 
 		if testExec, ok := test.(*TestExecutable); ok {
