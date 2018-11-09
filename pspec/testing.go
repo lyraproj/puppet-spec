@@ -135,7 +135,7 @@ func (tc *TestContext) resolveLazyValue(v eval.Value) eval.Value {
 		})
 		return types.WrapHash(ne)
 	case *types.ArrayValue:
-		return types.WrapArray(tc.resolveLazyValues(v.(*types.ArrayValue)))
+		return types.WrapValues(tc.resolveLazyValues(v.(*types.ArrayValue)))
 	default:
 		return v
 	}

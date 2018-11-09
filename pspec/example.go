@@ -341,7 +341,7 @@ func init() {
 					}
 					others = append(others, arg)
 				}
-				ex := newExamples(args[0].String(), given, splatNodes(types.WrapArray(others)))
+				ex := newExamples(args[0].String(), given, splatNodes(types.WrapValues(others)))
 				ex.addLetDefs(lets)
 				return types.WrapRuntime(ex)
 			})

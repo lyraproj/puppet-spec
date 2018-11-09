@@ -147,7 +147,7 @@ func newFormatValue(format eval.Value, arguments []eval.Value) *FormatValue {
 
 func (q *FormatValue) Get(tc *TestContext) eval.Value {
 	if format, ok := tc.resolveLazyValue(q.format).(*types.StringValue); ok {
-		return types.WrapString(types.PuppetSprintf(format.String(), tc.resolveLazyValues(types.WrapArray(q.arguments))...))
+		return types.WrapString(types.PuppetSprintf(format.String(), tc.resolveLazyValues(types.WrapValues(q.arguments))...))
 	}
 	panic(eval.Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
 }
