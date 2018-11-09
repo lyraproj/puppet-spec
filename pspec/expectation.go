@@ -282,11 +282,11 @@ func (sm *StringMatch) String() string {
 	return b.String()
 }
 
-var MATCH_TYPE = types.NewGoRuntimeType([]Match{})
-var ISSUE_TYPE = types.NewGoRuntimeType([]issue.Issue{})
-var INCLUDE_TYPE = types.NewGoRuntimeType([]*Include{})
-var EXCLUDE_TYPE = types.NewGoRuntimeType([]*Exclude{})
-var EXPECTATION_TYPE = types.NewGoRuntimeType([]*Expectation{})
+var MATCH_TYPE = types.NewGoRuntimeType((*Match)(nil))
+var ISSUE_TYPE = types.NewGoRuntimeType((*issue.Issue)(nil))
+var INCLUDE_TYPE = types.NewGoRuntimeType(&Include{})
+var EXCLUDE_TYPE = types.NewGoRuntimeType(&Exclude{})
+var EXPECTATION_TYPE = types.NewGoRuntimeType(&Expectation{})
 var MATCH_ARG_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE)
 var MATCHERS_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE)
 var EXPECTATIONS_TYPE = types.NewVariantType(types.DefaultStringType(), types.DefaultRegexpType(), ISSUE_TYPE, MATCH_TYPE, INCLUDE_TYPE, EXCLUDE_TYPE)
@@ -436,7 +436,7 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Issue`,
 		func(d eval.Dispatch) {
-			d.Param2(types.NewGoRuntimeType([]issue.Issue{}))
+			d.Param2(types.NewGoRuntimeType((*issue.Issue)(nil)))
 			d.OptionalParam(`Hash[String,Any]`)
 			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				var argsMap *hash.StringHash

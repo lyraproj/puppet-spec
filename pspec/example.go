@@ -278,9 +278,9 @@ func (ps *ParserOptions) CreateTests(expected Result) []Executable {
 func init() {
 	eval.NewGoConstructor2(`PSpec::Example`,
 		func(l eval.LocalTypes) {
-			l.Type2(`Given`, types.NewGoRuntimeType([]*Given{}))
-			l.Type2(`Let`, types.NewGoRuntimeType([]*LazyValueLet{}))
-			l.Type2(`SpecResult`, types.NewGoRuntimeType([]Result{}))
+			l.Type2(`Given`, types.NewGoRuntimeType(&Given{}))
+			l.Type2(`Let`, types.NewGoRuntimeType(&LazyValueLet{}))
+			l.Type2(`SpecResult`, types.NewGoRuntimeType((*Result)(nil)))
 		},
 		func(d eval.Dispatch) {
 			d.Param(`String`)
@@ -316,9 +316,9 @@ func init() {
 
 	eval.NewGoConstructor2(`PSpec::Examples`,
 		func(l eval.LocalTypes) {
-			l.Type2(`Given`, types.NewGoRuntimeType([]*Given{}))
-			l.Type2(`Let`, types.NewGoRuntimeType([]*LazyValueLet{}))
-			l.Type2(`ExampleNode`, types.NewGoRuntimeType([]Node{}))
+			l.Type2(`Given`, types.NewGoRuntimeType(&Given{}))
+			l.Type2(`Let`, types.NewGoRuntimeType(&LazyValueLet{}))
+			l.Type2(`ExampleNode`, types.NewGoRuntimeType((*Node)(nil)))
 			l.Type(`Nodes`, `Variant[ExampleNode, Array[Nodes]]`)
 		},
 		func(d eval.Dispatch) {
@@ -349,7 +349,7 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Given`,
 		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]Input{}), types.NewGoRuntimeType([]LazyValue{})))
+			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*Input)(nil)), types.NewGoRuntimeType((*LazyValue)(nil))))
 			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				inputs := make([]Input, argc)
@@ -390,7 +390,7 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Source`,
 		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
+			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
 			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				sources := make([]*source, argc)
@@ -403,7 +403,7 @@ func init() {
 
 	eval.NewGoConstructor(`PSpec::Epp_source`,
 		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
+			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
 			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				argc := len(args)
 				sources := make([]*source, argc)
@@ -417,7 +417,7 @@ func init() {
 	eval.NewGoConstructor(`PSpec::Named_source`,
 		func(d eval.Dispatch) {
 			d.Param(`String`)
-			d.Param2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType([]LazyValue{})))
+			d.Param2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
 			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 				return types.WrapRuntime(&NamedSource{source{args[1], false}, args[0].String()})
 			})
