@@ -8,7 +8,6 @@ import (
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-parser/parser"
-	"github.com/puppetlabs/go-pspec/testutils"
 )
 
 type (
@@ -429,7 +428,7 @@ func init() {
 		func(d eval.Dispatch) {
 			d.Param(`String`)
 			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
-				return types.WrapString(testutils.Unindent(args[0].String()))
+				return types.WrapString(issue.Unindent(args[0].String()))
 			})
 		})
 
