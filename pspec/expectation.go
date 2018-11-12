@@ -369,12 +369,13 @@ func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
 		actual, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
-		c := tc.EvalContext()
-		if !hasError(issues) {
-			_, evalIssues := evaluate(c, actual)
-			issues = append(issues, evalIssues...)
-		}
-		validateExpectations(assertions, e.expectations, issues, c.Logger().(*eval.ArrayLogger))
+		tc.DoWithContext(func(c eval.Context) {
+			if !hasError(issues) {
+				_, evalIssues := evaluate(c, actual)
+				issues = append(issues, evalIssues...)
+			}
+			validateExpectations(assertions, e.expectations, issues, c.Logger().(*eval.ArrayLogger))
+		})
 	}
 }
 

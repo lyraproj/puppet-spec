@@ -3,6 +3,7 @@ package pspec
 import (
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
+	"github.com/puppetlabs/go-evaluator/pcore"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-parser/parser"
@@ -32,7 +33,6 @@ type (
 		tearDowns      []Housekeeping
 		scope          eval.Scope
 		parserOptions  eval.OrderedMap
-		evalContext    eval.Context
 	}
 
 	testNode struct {
@@ -60,8 +60,9 @@ func (tc *TestContext) Get(l LazyComputedValue) eval.Value {
 	return v
 }
 
-func (tc *TestContext) EvalContext() eval.Context {
-	return impl.NewContext(eval.Puppet.NewEvaluatorWithLogger(eval.NewArrayLogger()), eval.NewParentedLoader(eval.Puppet.EnvironmentLoader())).WithScope(tc.newLazyScope())
+func (tc *TestContext) DoWithContext(doer func(eval.Context)) {
+	c := impl.NewContext(eval.Puppet.NewEvaluatorWithLogger(eval.NewArrayLogger()), eval.NewParentedLoader(eval.Puppet.EnvironmentLoader())).WithScope(tc.newLazyScope())
+	pcore.DoWithContext(c, doer)
 }
 
 func (tc *TestContext) ParserOptions() []parser.Option {

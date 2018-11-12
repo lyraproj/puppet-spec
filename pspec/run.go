@@ -18,7 +18,7 @@ func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.Defini
 	pcore.InitializePuppet()
 
 	if initializer != nil {
-		err := eval.Puppet.Do(func(c eval.Context) error {
+		err := eval.Puppet.Try(func(c eval.Context) error {
 			c.DoWithLoader(initializer(), c.ResolveResolvables)
 			return nil
 		})

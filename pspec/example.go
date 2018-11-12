@@ -116,9 +116,11 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 		context.resolveLazyValue(source)
 		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)
-		actualResult, evalIssues := evaluate(context.EvalContext(), actual)
-		failOnError(assertions, evalIssues)
-		assertions.AssertEquals(context.resolveLazyValue(e.expected), actualResult)
+		context.DoWithContext(func(c eval.Context) {
+			actualResult, evalIssues := evaluate(c, actual)
+			failOnError(assertions, evalIssues)
+			assertions.AssertEquals(context.resolveLazyValue(e.expected), actualResult)
+		})
 	}
 }
 
