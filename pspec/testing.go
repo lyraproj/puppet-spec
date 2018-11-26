@@ -204,7 +204,7 @@ func parseAndValidate(name, source string, singleExpression bool, o ...parser.Op
 
 func evaluate(c eval.Context, expr parser.Expression) (eval.Value, []issue.Reported) {
 	c.AddDefinitions(expr)
-	result, i := c.Evaluator().Evaluate(c, expr)
+	result, i := eval.TopEvaluate(c, expr)
 	issues := []issue.Reported{}
 	if i != nil {
 		issues = []issue.Reported{i}

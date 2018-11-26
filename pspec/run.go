@@ -41,10 +41,9 @@ func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.Defini
 		return
 	}
 	tests := make([]Test, 0, 100)
-	se := NewSpecEvaluator()
-	c := impl.NewContext(se, eval.NewParentedLoader(eval.Puppet.SystemLoader()))
+	c := impl.NewContext(NewSpecEvaluator(), eval.NewParentedLoader(eval.Puppet.SystemLoader()))
 	for _, testFile := range testFiles {
-		tests = append(tests, se.CreateTests(c, parseTestContents(t, testFile))...)
+		tests = append(tests, CreateTests(c, parseTestContents(t, testFile))...)
 	}
 	runTests(t, tests, nil)
 }

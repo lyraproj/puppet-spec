@@ -19,7 +19,7 @@ func TestPSpecs(t *testing.T) {
 				d.Param(`String`)
 				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 					planName := args[0].String()
-					if plan, ok := eval.Load(c, eval.NewTypedName(eval.PLAN, planName)); ok {
+					if plan, ok := eval.Load(c, eval.NewTypedName(eval.NsPlan, planName)); ok {
 						return eval.Wrap(nil, plan)
 					}
 					panic(eval.Error(eval.EVAL_UNKNOWN_PLAN, issue.H{`name`: planName}))
@@ -31,7 +31,7 @@ func TestPSpecs(t *testing.T) {
 				d.Param(`String`)
 				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 					taskName := args[0].String()
-					if task, ok := eval.Load(c, eval.NewTypedName(eval.TASK, taskName)); ok {
+					if task, ok := eval.Load(c, eval.NewTypedName(eval.NsTask, taskName)); ok {
 						return task.(eval.Value)
 					}
 					panic(eval.Error(eval.EVAL_UNKNOWN_TASK, issue.H{`name`: taskName}))

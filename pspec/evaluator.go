@@ -9,15 +9,9 @@ import (
 )
 
 type (
-	SpecEvaluator interface {
-		eval.Evaluator
-
-		CreateTests(c eval.Context, expression parser.Expression) []Test
-	}
-
 	specEval struct {
-		evaluator eval.Evaluator
-		path      []parser.Expression
+		eval.Evaluator
+		path []parser.Expression
 	}
 )
 
@@ -55,32 +49,19 @@ var PSPEC_QREFS = map[string]string{
 
 const TEST_NODES = `testNodes`
 
-func NewSpecEvaluator() SpecEvaluator {
-	specEval := &specEval{path: make([]parser.Expression, 0)}
-	specEval.evaluator = impl.NewOverriddenEvaluator(eval.NewStdLogger(), specEval)
-	return specEval
-}
-
-func (s *specEval) CallFunction(name string, args []eval.Value, call parser.CallExpression, c eval.Context) eval.Value {
-	return s.evaluator.CallFunction(name, args, call, c)
-}
-
-func (s *specEval) Evaluate(c eval.Context, expression parser.Expression) (eval.Value, issue.Reported) {
-	return s.evaluator.Evaluate(c, expression)
-}
-
-func (s *specEval) Logger() eval.Logger {
-	return s.evaluator.Logger()
+func NewSpecEvaluator() eval.Evaluator {
+	return &specEval{Evaluator: impl.NewEvaluator(eval.NewStdLogger()), path: make([]parser.Expression, 0)}
 }
 
 func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, args issue.H) issue.Reported {
 	return issue.NewReported(issueCode, issue.SEVERITY_ERROR, args, semantic)
 }
 
-func (s *specEval) CreateTests(c eval.Context, expression parser.Expression) []Test {
+func CreateTests(c eval.Context, expression parser.Expression) []Test {
 	c.Set(TEST_NODES, make([]Node, 0))
 	c.AddDefinitions(expression)
-	if _, err := s.Evaluate(c, expression); err != nil {
+	_, err := eval.TopEvaluate(c, expression)
+	if err != nil {
 		panic(err)
 	}
 	ns, _ := c.Get(TEST_NODES)
@@ -101,7 +82,7 @@ func (s *specEval) Eval(expression parser.Expression, ctx eval.Context) eval.Val
 	case *parser.CallNamedFunctionExpression:
 		return s.eval_CallNamedFunctionExpression(expression.(*parser.CallNamedFunctionExpression), ctx)
 	default:
-		return s.evaluator.Eval(expression, ctx)
+		return impl.BasicEval(s, expression, ctx)
 	}
 }
 
@@ -144,7 +125,7 @@ func (s *specEval) eval_QualifiedReference(qr *parser.QualifiedReference, ctx ev
 	if p, ok := PSPEC_QREFS[qr.Name()]; ok {
 		qr = qr.WithName(p)
 	}
-	return s.evaluator.Eval(qr, ctx)
+	return impl.BasicEval(s, qr, ctx)
 }
 
 func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFunctionExpression, c eval.Context) eval.Value {
@@ -153,7 +134,7 @@ func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFuncti
 			call = call.WithFunctor(qr.WithName(p))
 		}
 	}
-	return s.evaluator.Eval(call, c)
+	return impl.BasicEval(s, call, c)
 }
 
 func hasError(issues []issue.Reported) bool {
