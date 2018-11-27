@@ -1,7 +1,7 @@
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/puppetlabs/data-protobuf v0.0.0-20181112120528-77dff819c942/go.mod h1:sNvzkzCGeUn+Umk++a+iurKO3ez/Q4xZJ8S91N0/dK8=
-github.com/puppetlabs/go-evaluator v0.0.0-20181126214729-ca090039f099 h1:nYigjx5SoMzYjDKvE6p3H1qhuKuLg7vHUdNqFllEO8w=
-github.com/puppetlabs/go-evaluator v0.0.0-20181126214729-ca090039f099/go.mod h1:b/yhn2i6Zn1Qxur9RkJCzMyYtwlUmPNZKeJbEB8Kl6U=
+github.com/puppetlabs/go-evaluator v0.0.0-20181127071051-36cb5b8c2e36 h1:6ohssWdSgzOuxzQtN3qsYRScnBrSLYtCUuHpJLuQbMI=
+github.com/puppetlabs/go-evaluator v0.0.0-20181127071051-36cb5b8c2e36/go.mod h1:b/yhn2i6Zn1Qxur9RkJCzMyYtwlUmPNZKeJbEB8Kl6U=
 github.com/puppetlabs/go-issues v0.0.0-20181112112915-c16bc8ecd50f h1:HKZK7Rk8LAmQqWagoWSBYvR8Oeu6mN7fTK1bMb24ZaE=
 github.com/puppetlabs/go-issues v0.0.0-20181112112915-c16bc8ecd50f/go.mod h1:UNpBgsvFV8ZBoNkXo2YOrkWHA4sXoBmrDGw572x257U=
 github.com/puppetlabs/go-parser v0.0.0-20181126141003-73360f01354f h1:i6eCFL9uUFXv4uhWHsRqONbm+9aYP0u0LsBzXBIs/y8=
