@@ -3,7 +3,6 @@ package pspec
 import (
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/impl"
-	"github.com/puppetlabs/go-evaluator/pcore"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-parser/parser"
@@ -62,7 +61,7 @@ func (tc *TestContext) Get(l LazyComputedValue) eval.Value {
 
 func (tc *TestContext) DoWithContext(doer func(eval.Context)) {
 	c := impl.NewContext(impl.NewEvaluator, eval.NewParentedLoader(eval.Puppet.EnvironmentLoader()), eval.NewArrayLogger())
-	pcore.DoWithContext(c, func(c eval.Context) {
+	eval.DoWithContext(c, func(c eval.Context) {
 		c.DoWithScope(tc.newLazyScope(), func() {
 			doer(c)
 		})
