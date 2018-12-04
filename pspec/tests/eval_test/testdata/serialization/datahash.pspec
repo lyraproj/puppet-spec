@@ -43,35 +43,35 @@ Examples('ToDataConverter',
       Evaluates_ok()),
 
     Example('converts Error to rich data hash',
-      Given(`to_data(Error('bad things happened', 'puppetlabs/error'), message_prefix => 'x', rich_data => true, symbol_as_string => false)`),
-      Evaluates_to('__ptype' => 'Error', 'message' => 'bad things happened', 'kind' => 'puppetlabs/error'),
+      Given(`to_data(Error('bad things happened', 'lyra/error'), message_prefix => 'x', rich_data => true, symbol_as_string => false)`),
+      Evaluates_to('__ptype' => 'Error', 'message' => 'bad things happened', 'kind' => 'lyra/error'),
       Evaluates_ok()),
   ),
 )
 
 Examples('Converting rich data to JSON',
   Example('converts Error',
-    Given(`data_to_json(to_data(Error('bad things happened', 'puppetlabs/error'), rich_data => true))`),
+    Given(`data_to_json(to_data(Error('bad things happened', 'lyra/error'), rich_data => true))`),
     Evaluates_to(@(JSON))),
-      {"__ptype":"Error","kind":"puppetlabs/error","message":"bad things happened"}
+      {"__ptype":"Error","kind":"lyra/error","message":"bad things happened"}
       |JSON
 
   Example('indents',
-    Given(`data_to_json(to_data(Error('bad things happened', 'puppetlabs/error'), rich_data => true), indent => '  ')`),
+    Given(`data_to_json(to_data(Error('bad things happened', 'lyra/error'), rich_data => true), indent => '  ')`),
     Evaluates_to(@(JSON))),
       {
         "__ptype": "Error",
-        "kind": "puppetlabs/error",
+        "kind": "lyra/error",
         "message": "bad things happened"
       }
       |JSON
 
   Example('prefixes',
-    Given(`data_to_json(to_data(Error('bad things happened', 'puppetlabs/error'), rich_data => true), prefix => '  ', indent => '  ')`),
+    Given(`data_to_json(to_data(Error('bad things happened', 'lyra/error'), rich_data => true), prefix => '  ', indent => '  ')`),
     Evaluates_to(@(JSON))),
       {
           "__ptype": "Error",
-          "kind": "puppetlabs/error",
+          "kind": "lyra/error",
           "message": "bad things happened"
         }
       |JSON
@@ -79,8 +79,8 @@ Examples('Converting rich data to JSON',
 
 Examples('Converting JSON to rich data',
   Example('converts Error',
-    Given(`from_data(json_to_data('{"__ptype":"Error","kind":"puppetlabs/error","message":"bad things happened"}'))`),
-    Evaluates_to(::Error('bad things happened', 'puppetlabs/error'))),
+    Given(`from_data(json_to_data('{"__ptype":"Error","kind":"lyra/error","message":"bad things happened"}'))`),
+    Evaluates_to(::Error('bad things happened', 'lyra/error'))),
 )
 
 Examples('FromDataConverter',
@@ -101,8 +101,8 @@ Examples('FromDataConverter',
     Evaluates_to(true)),
 
   Example('converts Error hash to Error',
-    Given(`from_data('__ptype' => 'Error', 'message' => 'bad things happened', 'kind' => 'puppetlabs/error')`),
-    Evaluates_to(::Error('bad things happened', 'puppetlabs/error'))),
+    Given(`from_data('__ptype' => 'Error', 'message' => 'bad things happened', 'kind' => 'lyra/error')`),
+    Evaluates_to(::Error('bad things happened', 'lyra/error'))),
 )
 
 Examples('Passing values through json',

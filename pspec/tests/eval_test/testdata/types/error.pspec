@@ -147,20 +147,20 @@ Examples('Error type',
 
     Example('is not an instance of Error unless kind matches',
       Given(@(SRC)),
-        Error('bad things happened', 'puppetlabs/error') =~ Error[/puppet\/error/]
+        Error('bad things happened', 'lyra/error') =~ Error[/puppet\/error/]
         |-SRC
       Evaluates_to(false)),
 
     Example('is not an instance of Error unless issue_code matches',
       Given(@(SRC)),
-        Error('bad things happened', 'puppetlabs/error', 'BAR') =~ Error[default, 'FOO']
+        Error('bad things happened', 'lyra/error', 'BAR') =~ Error[default, 'FOO']
         |-SRC
       Evaluates_to(false)),
 
     Example('is not an instance of Error unless both kind and issue is a match',
       Given(@(SRC)),
         $e = Error('bad things happened', 'puppet/error', 'FEE')
-        [$e =~ Error['puppetlabs/error', 'FEE'], $e =~ Error['puppet/error', 'FUM']]
+        [$e =~ Error['lyra/error', 'FEE'], $e =~ Error['puppet/error', 'FUM']]
         |-SRC
       Evaluates_to([false, false])),
   ),

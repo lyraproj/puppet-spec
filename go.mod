@@ -1,7 +1,7 @@
-module github.com/puppetlabs/go-pspec
+module github.com/lyraproj/puppet-spec
 
 require (
-	github.com/puppetlabs/go-evaluator v0.0.0-20181127220327-813ec4b01b78
-	github.com/puppetlabs/go-issues v0.0.0-20181112112915-c16bc8ecd50f
-	github.com/puppetlabs/go-parser v0.0.0-20181126141003-73360f01354f
+	github.com/lyraproj/issue v0.0.0-20181204205859-7ed1f9741f4a
+	github.com/lyraproj/puppet-evaluator v0.0.0-20181204215559-59798379bfe3
+	github.com/lyraproj/puppet-parser v0.0.0-20181204211711-c9870a9ba412
 )

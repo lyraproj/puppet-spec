@@ -2,7 +2,7 @@ package parser_test
 
 import (
 	"testing"
-	"github.com/puppetlabs/go-pspec/pspec"
+	"github.com/lyraproj/puppet-spec/pspec"
 )
 
 func TestAll(t *testing.T) {
