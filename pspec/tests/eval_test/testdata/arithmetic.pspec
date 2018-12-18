@@ -251,6 +251,14 @@ Examples('-',
     Example('other element',
       Given(`61.0 - /.*/`),
       Evaluates_with(Error(EVAL_OPERATOR_NOT_APPLICABLE_WHEN))),
+
+    Example('evaluates left to right',
+      Given(`10.0 - 5.0 - 3.0`),
+      Evaluates_to(2.0)),
+
+    Example('evaluates left to right +',
+      Given(`10.0 - 5.0 + 3.0`),
+      Evaluates_to(8.0)),
  ),
 
   Examples('string with integer',

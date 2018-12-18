@@ -52,29 +52,15 @@ Examples('ToDataConverter',
 Examples('Converting rich data to JSON',
   Example('converts Error',
     Given(`data_to_json(to_data(Error('bad things happened', 'lyra/error'), rich_data => true))`),
-    Evaluates_to(@(JSON))),
-      {"__ptype":"Error","kind":"lyra/error","message":"bad things happened"}
-      |JSON
+    Evaluates_to(`{"__ptype":"Error","message":"bad things happened","kind":"lyra/error"}`)),
 
   Example('indents',
     Given(`data_to_json(to_data(Error('bad things happened', 'lyra/error'), rich_data => true), indent => '  ')`),
-    Evaluates_to(@(JSON))),
-      {
-        "__ptype": "Error",
-        "kind": "lyra/error",
-        "message": "bad things happened"
-      }
-      |JSON
+    Evaluates_to(`{"__ptype":"Error","message":"bad things happened","kind":"lyra/error"}`)),
 
   Example('prefixes',
     Given(`data_to_json(to_data(Error('bad things happened', 'lyra/error'), rich_data => true), prefix => '  ', indent => '  ')`),
-    Evaluates_to(@(JSON))),
-      {
-          "__ptype": "Error",
-          "kind": "lyra/error",
-          "message": "bad things happened"
-        }
-      |JSON
+    Evaluates_to(`{"__ptype":"Error","message":"bad things happened","kind":"lyra/error"}`)),
 )
 
 Examples('Converting JSON to rich data',
@@ -91,10 +77,6 @@ Examples('FromDataConverter',
   Example('converts SemVerRange hash to SemVerRange',
     Given(`from_data('__ptype' => 'SemVerRange', '__pvalue' => '>=1.2.3')`),
     Evaluates_to(SemVerRange('>=1.2.3'))),
-
-  Example('converts Symbol hash to Symbol',
-    Given(`from_data('__ptype' => 'Symbol', '__pvalue' => 'sym')`),
-    Evaluates_to(to_symbol('sym'))),
 
   Example('converts Sensitive hash to Sensitive',
     Given(`from_data('__ptype' => 'Sensitive', '__pvalue' => 238) =~ Sensitive`),
@@ -117,7 +99,7 @@ Examples('Passing values through json',
     Enum,
     Float,
     Hash,
-#   Init,
+    Init,
     Integer,
     Iterable,
     Iterator,

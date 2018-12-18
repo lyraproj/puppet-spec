@@ -2,13 +2,14 @@ package eval
 
 import (
 	"bytes"
+	"github.com/lyraproj/puppet-evaluator/impl"
 	"strings"
 	"testing"
 
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/serialization"
 	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-spec/pspec"
 )
 
@@ -96,8 +97,81 @@ func TestPSpecs(t *testing.T) {
 						options = args[1].(eval.OrderedMap)
 					}
 					out := bytes.NewBufferString(``)
-					serialization.DataToJson(c, args[0], out, options)
+					js := serialization.NewJsonStreamer(out)
+					serialization.NewSerializer(options).Convert(args[0], js)
 					return types.WrapString(out.String())
+				})
+			})
+
+		eval.NewGoFunction(`all_types`,
+			func(d eval.Dispatch) {
+				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+					allTypes := make([]eval.Value, 0, 50)
+					impl.EachCoreType(func(t eval.Type) { allTypes = append(allTypes, t) })
+					return types.WrapValues(allTypes)
+				})
+			})
+
+		eval.NewGoFunction(`abstract_types`,
+			func(d eval.Dispatch) {
+				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+					return types.WrapValues([]eval.Value{
+						types.DefaultAnyType(),
+						types.DefaultAnnotationType(),
+						types.DefaultCallableType(),
+						types.DefaultCollectionType(),
+						types.DefaultEnumType(),
+						types.DefaultDataType(),
+						types.DefaultDefaultType(),
+						types.DefaultInitType(),
+						types.DefaultIterableType(),
+						types.DefaultIteratorType(),
+						types.DefaultLikeType(),
+						types.DefaultNotUndefType(),
+						types.DefaultObjectType(),
+						types.DefaultOptionalType(),
+						types.DefaultRuntimeType(),
+						types.DefaultPatternType(),
+						types.DefaultRichDataType(),
+						types.DefaultScalarDataType(),
+						types.DefaultScalarType(),
+						types.DefaultTypeReferenceType(),
+						types.DefaultTypeAliasType(),
+						types.DefaultTypeSetType(),
+						types.DefaultVariantType(),
+						types.DefaultUndefType(),
+					})
+				})
+			})
+
+		eval.NewGoFunction(`internal_types`,
+			func(d eval.Dispatch) {
+				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+					return types.WrapValues([]eval.Value{
+						types.DefaultTypeReferenceType(),
+						types.DefaultTypeAliasType(),
+					})
+				})
+			})
+
+		eval.NewGoFunction(`scalar_types`,
+			func(d eval.Dispatch) {
+				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+					return types.WrapValues([]eval.Value{
+						types.DefaultScalarDataType(),
+						types.DefaultScalarType(),
+						types.DefaultStringType(),
+						types.DefaultNumericType(),
+						types.DefaultIntegerType(),
+						types.DefaultFloatType(),
+						types.DefaultBooleanType(),
+						types.DefaultRegexpType(),
+						types.DefaultPatternType(),
+						types.DefaultEnumType(),
+						types.DefaultSemVerType(),
+						types.DefaultTimespanType(),
+						types.DefaultTimestampType(),
+					})
 				})
 			})
 
@@ -105,7 +179,9 @@ func TestPSpecs(t *testing.T) {
 			func(d eval.Dispatch) {
 				d.Param(`String`)
 				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
-					return serialization.JsonToData(c, ``, strings.NewReader(args[0].String()))
+					fc := serialization.NewCollector()
+					serialization.JsonToData(``, strings.NewReader(args[0].String()), fc)
+					return fc.Value()
 				})
 			})
 

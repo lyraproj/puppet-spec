@@ -1,0 +1,37 @@
+Examples('Init type',
+  Example('can be used without parameters',
+    Given(`type(Init)`),
+    Evaluates_to(Type[Init])),
+
+  Example('can use one Type parameter',
+    Given(`type(Init[Integer])`),
+    Evaluates_to(Type[Init[Integer]])),
+
+  Example('can have additional arguments',
+    Given(`type(Init[Integer, 16])`),
+    Evaluates_to(Type[Init[Integer, 16]])),
+
+  (all_types() - abstract_types() - internal_types()).map |$t| {
+     Example("can be created on a ${t.name}",
+       Given("String(Init[${t.name}])"),
+       Evaluates_to("Init[${t.name}]"))
+  },
+
+  (abstract_types() - internal_types()).map |$t| {
+     Example("can not be created on a ${t.name}",
+       Given("String(Init[${t.name}])"),
+       Evaluates_with(Error(Issue(EVAL_CTOR_NOT_FOUND, type => $t.name))))
+  },
+
+  Example('Init[Integer, 16] can create an instance from a String',
+    Given(`Init[Integer, 16]('100')`),
+    Evaluates_to(256)),
+
+  Example("Init[String,'%x'] can create an instance from an Integer",
+    Given(`Init[String,'%x'](128)`),
+    Evaluates_to('80')),
+
+  Example('Init[String,23] raises an error because no available dispatcher exists',
+    Given(`Init[String,23](128)`),
+    Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR)))),
+)
