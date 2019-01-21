@@ -146,7 +146,7 @@ func newFormatValue(format eval.Value, arguments []eval.Value) *FormatValue {
 }
 
 func (q *FormatValue) Get(tc *TestContext) eval.Value {
-	if format, ok := tc.resolveLazyValue(q.format).(*types.StringValue); ok {
+	if format, ok := tc.resolveLazyValue(q.format).(eval.StringValue); ok {
 		return types.WrapString(types.PuppetSprintf(format.String(), tc.resolveLazyValues(types.WrapValues(q.arguments))...))
 	}
 	panic(eval.Error(PSPEC_FORMAT_NOT_STRING, issue.NO_ARGS))
@@ -186,7 +186,7 @@ func makeDirectories(parent string, hash *types.HashValue) {
 func writeFileValue(path string, value eval.Value) {
 	var err error
 	switch value.(type) {
-	case *types.StringValue:
+	case eval.StringValue:
 		err = ioutil.WriteFile(path, []byte(value.String()), 0644)
 	case *types.BinaryValue:
 		err = ioutil.WriteFile(path, value.(*types.BinaryValue).Bytes(), 0644)

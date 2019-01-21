@@ -1,0 +1,66 @@
+Examples('Resource annotation',
+  Example('can cannotate object',
+    Given(@(SRC)),
+      type Aws::Vpc = {
+        attributes => {
+          amazon_provided_ipv6_cidr_block => Boolean,
+          cidr_block => String,
+          instance_tenancy => Optional[String],
+          enable_dns_hostnames => Boolean,
+          enable_dns_support => Boolean,
+          tags => Hash[String,String],
+          vpc_id => Optional[String],
+          is_default => Boolean,
+          state => String,
+          dhcp_options_id  => Optional[String]
+        },
+
+        annotations => {
+          Lyra::Resource => {
+            provided_attributes => [vpc_id, instance_tenancy, dhcp_options_id],
+            relationships => {
+              subnets => {
+                type => Aws::Subnet,
+                kind => contained,
+                cardinality => many,
+                keys => [vpc_id,vpc_id],
+                reverse_name => vpc
+              }
+            }
+          }
+        }
+      }
+
+      type Aws::Subnet = {
+        attributes => {
+          vpc_id => String,
+          availability_zone => Optional[String],
+          cidr_block => String,
+          ipv6_cidr_block => String,
+          tags => Hash[String,String],
+          assign_ipv6_address_on_creation => Boolean,
+          map_public_ip_on_launch  => Boolean,
+          available_ip_address_count => Optional[String],
+          default_for_az => Boolean,
+          state => Optional[String],
+          subnet_id => Optional[String],
+        },
+
+        annotations => {
+          Lyra::Resource => {
+            provided_attributes => [availability_zone, available_ip_address_count, state, subnet_id],
+            relationships => {
+              vpc => {
+                type => Aws::Vpc,
+                kind => container,
+                cardinality => one,
+                keys => [vpc_id,vpc_id],
+              }
+            }
+          }
+        }
+      }
+      String(Aws::Subnet)
+      |-SRC
+    Evaluates_to(`Aws::Subnet`)),
+)

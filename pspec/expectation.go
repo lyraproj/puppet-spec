@@ -295,7 +295,7 @@ func makeMatches(name string, args []eval.Value) (result []Match) {
 	result = make([]Match, len(args))
 	for ix, arg := range args {
 		switch arg.(type) {
-		case *types.StringValue:
+		case eval.StringValue:
 			result[ix] = &StringMatch{false, arg.String()}
 			continue
 		case *types.RegexpValue:
@@ -319,7 +319,7 @@ func makeMatches(name string, args []eval.Value) (result []Match) {
 
 func makeIssueArgMatch(arg eval.Value) interface{} {
 	switch arg.(type) {
-	case *types.StringValue:
+	case eval.StringValue:
 		return &StringMatch{false, arg.String()}
 	case *types.RegexpValue:
 		return &RegexpMatch{arg.(*types.RegexpValue).Regexp()}
@@ -333,7 +333,7 @@ func makeExpectations(name string, level eval.LogLevel, args []eval.Value) (resu
 	result = make([]*LevelExpectation, len(args))
 	for ix, arg := range args {
 		switch arg.(type) {
-		case *types.StringValue:
+		case eval.StringValue:
 			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&StringMatch{false, arg.String()}}}}}
 			continue
 		case *types.RegexpValue:

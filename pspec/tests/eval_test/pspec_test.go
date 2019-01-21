@@ -52,7 +52,6 @@ func TestPSpecs(t *testing.T) {
 				d.Param(`Any`)
 				d.OptionalParam(
 					`Struct[
-  Optional['type_by_reference'] => Boolean,
   Optional['local_reference'] => Boolean,
   Optional['symbol_as_string'] => Boolean,
   Optional['rich_data'] => Boolean,
@@ -63,7 +62,10 @@ func TestPSpecs(t *testing.T) {
 					if len(args) > 1 {
 						options = args[1].(eval.OrderedMap)
 					}
-					return serialization.NewToDataConverter(options).Convert(args[0])
+					s := serialization.NewSerializer(c, options)
+					cl := serialization.NewCollector()
+					s.Convert(args[0], cl)
+					return cl.Value()
 				})
 			})
 
@@ -79,7 +81,10 @@ func TestPSpecs(t *testing.T) {
 					if len(args) > 1 {
 						options = args[1].(eval.OrderedMap)
 					}
-					return serialization.NewFromDataConverter(c, options).Convert(args[0])
+					s := serialization.NewSerializer(c, eval.Wrap(c, map[string]bool{`rich_data`: false, `local_reference`: false}).(eval.OrderedMap))
+					d := serialization.NewDeserializer(c, options)
+					s.Convert(args[0], d)
+					return d.Value()
 				})
 			})
 
@@ -98,7 +103,7 @@ func TestPSpecs(t *testing.T) {
 					}
 					out := bytes.NewBufferString(``)
 					js := serialization.NewJsonStreamer(out)
-					serialization.NewSerializer(options).Convert(args[0], js)
+					serialization.NewSerializer(c, options).Convert(args[0], js)
 					return types.WrapString(out.String())
 				})
 			})

@@ -357,7 +357,7 @@ func init() {
 				for idx := 0; idx < argc; idx++ {
 					arg := args[idx]
 					switch arg.(type) {
-					case *types.StringValue:
+					case eval.StringValue:
 						inputs[idx] = &Source{[]*source{{arg, false}}}
 					default:
 						v := arg.(*types.RuntimeValue).Interface()
