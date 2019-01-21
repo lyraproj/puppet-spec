@@ -77,15 +77,15 @@ func (tc *TestContext) ParserOptions() []parser.Option {
 		tc.parserOptions.EachPair(func(k, v eval.Value) {
 			switch k.String() {
 			case `tasks`:
-				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(eval.BooleanValue); ok && b.Bool() {
 					o = append(o, parser.PARSER_TASKS_ENABLED)
 				}
 			case `hex_escapes`:
-				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(eval.BooleanValue); ok && b.Bool() {
 					o = append(o, parser.PARSER_HANDLE_HEX_ESCAPES)
 				}
 			case `backtick_strings`:
-				if b, ok := v.(*types.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(eval.BooleanValue); ok && b.Bool() {
 					o = append(o, parser.PARSER_HANDLE_BACKTICK_STRINGS)
 				}
 			}
