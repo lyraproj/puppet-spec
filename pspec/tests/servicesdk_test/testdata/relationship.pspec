@@ -17,14 +17,14 @@ Examples('Resource annotation',
 
         annotations => {
           Lyra::Resource => {
-            provided_attributes => [vpc_id, instance_tenancy, dhcp_options_id],
+            providedAttributes => [vpc_id, instance_tenancy, dhcp_options_id],
             relationships => {
               subnets => {
                 type => Aws::Subnet,
                 kind => contained,
                 cardinality => many,
                 keys => [vpc_id,vpc_id],
-                reverse_name => vpc
+                reverseName => vpc
               }
             }
           }
@@ -48,7 +48,7 @@ Examples('Resource annotation',
 
         annotations => {
           Lyra::Resource => {
-            provided_attributes => [availability_zone, available_ip_address_count, state, subnet_id],
+            providedAttributes => [availability_zone, available_ip_address_count, state, subnet_id],
             relationships => {
               vpc => {
                 type => Aws::Vpc,

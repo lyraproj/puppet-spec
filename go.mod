@@ -1,8 +1,8 @@
 module github.com/lyraproj/puppet-spec
 
 require (
-	github.com/lyraproj/issue v0.0.0-20181208172701-8d203563a8dc
-	github.com/lyraproj/puppet-evaluator v0.0.0-20190121224504-9cbd778da25e
-	github.com/lyraproj/puppet-parser v0.0.0-20181212205830-31c3104fe78d
-	github.com/lyraproj/servicesdk v0.0.0-20190119121211-1908bd44546f
+	github.com/lyraproj/issue v0.0.0-20190213110846-64f0e861a560
+	github.com/lyraproj/puppet-evaluator v0.0.0-20190225094930-8360695d5705
+	github.com/lyraproj/puppet-parser v0.0.0-20190220160521-d5f541fd6c57
+	github.com/lyraproj/servicesdk v0.0.0-20190225100236-8457a6d202e5
 )
