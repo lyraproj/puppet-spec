@@ -2,7 +2,6 @@ package eval
 
 import (
 	"bytes"
-	"github.com/lyraproj/puppet-evaluator/impl"
 	"strings"
 	"testing"
 
@@ -112,7 +111,7 @@ func TestPSpecs(t *testing.T) {
 			func(d eval.Dispatch) {
 				d.Function(func(c eval.Context, args []eval.Value) eval.Value {
 					allTypes := make([]eval.Value, 0, 50)
-					impl.EachCoreType(func(t eval.Type) { allTypes = append(allTypes, t) })
+					types.EachCoreType(func(t eval.Type) { allTypes = append(allTypes, t) })
 					return types.WrapValues(allTypes)
 				})
 			})
