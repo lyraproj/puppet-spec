@@ -63,9 +63,9 @@ func (p *pnParser) parseNext() pn.PN {
 }
 
 func (p *pnParser) parseLiteral() pn.PN {
-	pn := pn.Literal(p.tokenValue)
+	pv := pn.Literal(p.tokenValue)
 	p.nextToken()
-	return pn
+	return pv
 }
 
 func (p *pnParser) parseArray() pn.PN {
@@ -278,7 +278,7 @@ func (p *pnParser) error(message string) error {
 			pos++
 		}
 	}
-	return issue.NewReported(PSPEC_PN_PARSE_ERROR, issue.SEVERITY_ERROR, issue.H{`detail`: message}, issue.NewLocation(loc.File(), line, pos))
+	return issue.NewReported(PnParseError, issue.SEVERITY_ERROR, issue.H{`detail`: message}, issue.NewLocation(loc.File(), line, pos))
 }
 
 func (p *pnParser) from(s int) string {

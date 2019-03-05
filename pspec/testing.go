@@ -1,10 +1,12 @@
 package pspec
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/impl"
-	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/puppet-evaluator/evaluator"
+	"github.com/lyraproj/puppet-evaluator/pdsl"
 	"github.com/lyraproj/puppet-parser/parser"
 	"github.com/lyraproj/puppet-parser/validator"
 )
@@ -28,10 +30,10 @@ type (
 	TestContext struct {
 		parent         *TestContext
 		node           Node
-		accessedValues map[int64]eval.Value
+		accessedValues map[int64]px.Value
 		tearDowns      []Housekeeping
-		scope          eval.Scope
-		parserOptions  eval.OrderedMap
+		scope          pdsl.Scope
+		parserOptions  px.OrderedMap
 	}
 
 	testNode struct {
@@ -49,7 +51,7 @@ type (
 	}
 )
 
-func (tc *TestContext) Get(l LazyComputedValue) eval.Value {
+func (tc *TestContext) Get(l LazyComputedValue) px.Value {
 	if v, ok := tc.accessedValues[l.Id()]; ok {
 		return v
 	}
@@ -59,33 +61,34 @@ func (tc *TestContext) Get(l LazyComputedValue) eval.Value {
 	return v
 }
 
-func (tc *TestContext) DoWithContext(doer func(eval.Context)) {
-	c := impl.NewContext(impl.NewEvaluator, eval.NewParentedLoader(eval.Puppet.EnvironmentLoader()), eval.NewArrayLogger())
-	eval.DoWithContext(c, func(c eval.Context) {
-		c.DoWithScope(tc.newLazyScope(), func() {
-			doer(c)
+func (tc *TestContext) DoWithContext(doer func(pdsl.EvaluationContext)) {
+	c := evaluator.NewContext(evaluator.NewEvaluator, px.NewParentedLoader(pcore.EnvironmentLoader()), px.NewArrayLogger())
+	px.DoWithContext(c, func(c px.Context) {
+		ec := c.(pdsl.EvaluationContext)
+		ec.DoWithScope(tc.newLazyScope(), func() {
+			doer(ec)
 		})
 	})
 }
 
 func (tc *TestContext) ParserOptions() []parser.Option {
-	o := []parser.Option{}
+	o := make([]parser.Option, 0)
 	if tc.parent != nil {
 		o = append(o, tc.parent.ParserOptions()...)
 	}
 	if tc.parserOptions != nil {
-		tc.parserOptions.EachPair(func(k, v eval.Value) {
+		tc.parserOptions.EachPair(func(k, v px.Value) {
 			switch k.String() {
 			case `tasks`:
-				if b, ok := v.(eval.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(px.BooleanValue); ok && b.Bool() {
 					o = append(o, parser.PARSER_TASKS_ENABLED)
 				}
 			case `hex_escapes`:
-				if b, ok := v.(eval.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(px.BooleanValue); ok && b.Bool() {
 					o = append(o, parser.PARSER_HANDLE_HEX_ESCAPES)
 				}
 			case `backtick_strings`:
-				if b, ok := v.(eval.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(px.BooleanValue); ok && b.Bool() {
 					o = append(o, parser.PARSER_HANDLE_BACKTICK_STRINGS)
 				}
 			}
@@ -95,12 +98,12 @@ func (tc *TestContext) ParserOptions() []parser.Option {
 }
 
 func (tc *TestContext) newLazyScope() *LazyScope {
-	return &LazyScope{*tc.Scope().(*impl.BasicScope), tc}
+	return &LazyScope{*tc.Scope().(*evaluator.BasicScope), tc}
 }
 
-func (tc *TestContext) Scope() eval.Scope {
+func (tc *TestContext) Scope() pdsl.Scope {
 	if tc.scope == nil {
-		tc.scope = impl.NewScope(false)
+		tc.scope = evaluator.NewScope(false)
 	}
 	return tc.scope
 }
@@ -120,7 +123,7 @@ func (tc *TestContext) registerTearDown(td Housekeeping) {
 	tc.tearDowns = append(tc.tearDowns, td)
 }
 
-func (tc *TestContext) resolveLazyValue(v eval.Value) eval.Value {
+func (tc *TestContext) resolveLazyValue(v px.Value) px.Value {
 	switch v.(type) {
 	case *types.RuntimeValue:
 		if lv, ok := v.(*types.RuntimeValue).Interface().(LazyComputedValue); ok {
@@ -133,7 +136,7 @@ func (tc *TestContext) resolveLazyValue(v eval.Value) eval.Value {
 	case *types.HashValue:
 		oe := v.(*types.HashValue)
 		ne := make([]*types.HashEntry, oe.Len())
-		oe.EachWithIndex(func(v eval.Value, i int) {
+		oe.EachWithIndex(func(v px.Value, i int) {
 			e := v.(*types.HashEntry)
 			ne[i] = types.WrapHashEntry(tc.resolveLazyValue(e.Key()), tc.resolveLazyValue(e.Value()))
 		})
@@ -145,9 +148,9 @@ func (tc *TestContext) resolveLazyValue(v eval.Value) eval.Value {
 	}
 }
 
-func (tc *TestContext) resolveLazyValues(values eval.List) []eval.Value {
-	resolved := make([]eval.Value, values.Len())
-	values.EachWithIndex(func(e eval.Value, i int) {
+func (tc *TestContext) resolveLazyValues(values px.List) []px.Value {
+	resolved := make([]px.Value, values.Len())
+	values.EachWithIndex(func(e px.Value, i int) {
 		resolved[i] = tc.resolveLazyValue(e)
 	})
 	return resolved
@@ -166,7 +169,7 @@ func (v *TestExecutable) Executable() Executable {
 }
 
 func (v *TestExecutable) Run(ctx *TestContext, assertions Assertions) {
-	eval.Puppet.Reset()
+	pcore.Reset()
 	v.test(ctx, assertions)
 	for i := len(ctx.tearDowns) - 1; i >= 0; i-- {
 		safeHousekeeping(ctx.tearDowns[i])
@@ -177,7 +180,7 @@ func safeHousekeeping(h Housekeeping) {
 	defer func() {
 		if err := recover(); err != nil {
 			if e, ok := err.(error); ok {
-				eval.Puppet.Logger().Log(eval.ERR, types.WrapString(e.Error()))
+				pcore.Logger().Log(px.ERR, types.WrapString(e.Error()))
 			} else {
 				panic(err)
 			}
@@ -205,12 +208,19 @@ func parseAndValidate(name, source string, singleExpression bool, o ...parser.Op
 	return expr, issues
 }
 
-func evaluate(c eval.Context, expr parser.Expression) (eval.Value, []issue.Reported) {
+func evaluate(c pdsl.EvaluationContext, expr parser.Expression) (result px.Value, issues []issue.Reported) {
+	defer func() {
+		if r := recover(); r != nil {
+			if err, ok := r.(issue.Reported); ok {
+				issues = []issue.Reported{err}
+			} else {
+				panic(r)
+			}
+		}
+	}()
+
+	issues = []issue.Reported{}
 	c.AddDefinitions(expr)
-	result, i := eval.TopEvaluate(c, expr)
-	issues := []issue.Reported{}
-	if i != nil {
-		issues = []issue.Reported{i}
-	}
-	return result, issues
+	result = pdsl.TopEvaluate(c, expr)
+	return
 }

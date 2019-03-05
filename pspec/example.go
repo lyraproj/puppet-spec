@@ -2,11 +2,12 @@ package pspec
 
 import (
 	"fmt"
-
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/impl"
-	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/puppet-evaluator/evaluator"
+	"github.com/lyraproj/puppet-evaluator/pdsl"
 	"github.com/lyraproj/puppet-parser/parser"
 )
 
@@ -29,7 +30,7 @@ type (
 	}
 
 	ResultEntry interface {
-		Match() eval.Value
+		Match() px.Value
 	}
 
 	node struct {
@@ -61,11 +62,11 @@ type (
 
 	EvaluationResult struct {
 		example  *Example
-		expected eval.Value
+		expected px.Value
 	}
 
 	source struct {
-		code eval.Value
+		code px.Value
 		epp  bool
 	}
 
@@ -79,19 +80,19 @@ type (
 	}
 
 	ParserOptions struct {
-		options eval.OrderedMap
+		options px.OrderedMap
 	}
 
 	SettingsInput struct {
-		settings eval.Value
+		settings px.Value
 	}
 
 	ScopeInput struct {
-		scope eval.Value
+		scope px.Value
 	}
 )
 
-func pathContentAndEpp(src interface{}) (path string, content eval.Value, epp bool) {
+func pathContentAndEpp(src interface{}) (path string, content px.Value, epp bool) {
 	switch src.(type) {
 	case *source:
 		s := src.(*source)
@@ -100,7 +101,7 @@ func pathContentAndEpp(src interface{}) (path string, content eval.Value, epp bo
 		ns := src.(*NamedSource)
 		return ns.name, ns.code, ns.epp
 	default:
-		panic(eval.Error(eval.EVAL_FAILURE, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, src)}))
+		panic(px.Error(px.Failure, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, src)}))
 	}
 }
 
@@ -112,10 +113,9 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 		if epp {
 			o = append(o, parser.PARSER_EPP_MODE)
 		}
-		context.resolveLazyValue(source)
 		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)
-		context.DoWithContext(func(c eval.Context) {
+		context.DoWithContext(func(c pdsl.EvaluationContext) {
 			actualResult, evalIssues := evaluate(c, actual)
 			failOnError(assertions, evalIssues)
 			assertions.AssertEquals(context.resolveLazyValue(e.expected), actualResult)
@@ -231,11 +231,10 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
 		settings, ok := tc.resolveLazyValue(s.settings).(*types.HashValue)
 		if !ok {
-			eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Settings`})
+			panic(px.Error(ValueNotHash, issue.H{`type`: `Settings`}))
 		}
-		p := eval.Puppet
-		settings.EachPair(func(key, value eval.Value) {
-			p.Set(key.String(), value)
+		settings.EachPair(func(key, value px.Value) {
+			pcore.Set(key.String(), value)
 		})
 	}}
 }
@@ -244,9 +243,9 @@ func (s *ScopeInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
 		scope, ok := tc.resolveLazyValue(s.scope).(*types.HashValue)
 		if !ok {
-			eval.Error(PSPEC_VALUE_NOT_HASH, issue.H{`type`: `Scope`})
+			panic(px.Error(ValueNotHash, issue.H{`type`: `Scope`}))
 		}
-		tc.scope = impl.NewScope2(scope, false)
+		tc.scope = evaluator.NewScope2(scope, false)
 	}}
 }
 
@@ -277,16 +276,16 @@ func (ps *ParserOptions) CreateTests(expected Result) []Executable {
 }
 
 func init() {
-	eval.NewGoConstructor2(`PSpec::Example`,
-		func(l eval.LocalTypes) {
+	px.NewGoConstructor2(`PSpec::Example`,
+		func(l px.LocalTypes) {
 			l.Type2(`Given`, types.NewGoRuntimeType(&Given{}))
 			l.Type2(`Let`, types.NewGoRuntimeType(&LazyValueLet{}))
 			l.Type2(`SpecResult`, types.NewGoRuntimeType((*Result)(nil)))
 		},
-		func(d eval.Dispatch) {
+		func(d px.Dispatch) {
 			d.Param(`String`)
 			d.RepeatedParam(`Variant[Let,Given,SpecResult]`)
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				lets := make([]*LazyValueLet, 0)
 				var given *Given
 				results := make([]Result, 0)
@@ -315,20 +314,20 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor2(`PSpec::Examples`,
-		func(l eval.LocalTypes) {
+	px.NewGoConstructor2(`PSpec::Examples`,
+		func(l px.LocalTypes) {
 			l.Type2(`Given`, types.NewGoRuntimeType(&Given{}))
 			l.Type2(`Let`, types.NewGoRuntimeType(&LazyValueLet{}))
 			l.Type2(`ExampleNode`, types.NewGoRuntimeType((*Node)(nil)))
 			l.Type(`Nodes`, `Variant[ExampleNode, Array[Nodes]]`)
 		},
-		func(d eval.Dispatch) {
+		func(d px.Dispatch) {
 			d.Param(`String`)
 			d.RepeatedParam(`Variant[Nodes,Let,Given]`)
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				lets := make([]*LazyValueLet, 0)
 				var given *Given
-				others := make([]eval.Value, 0)
+				others := make([]px.Value, 0)
 				for _, arg := range args[1:] {
 					if rt, ok := arg.(*types.RuntimeValue); ok {
 						if l, ok := rt.Interface().(*LazyValueLet); ok {
@@ -348,16 +347,16 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Given`,
-		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*Input)(nil)), types.NewGoRuntimeType((*LazyValue)(nil))))
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+	px.NewGoConstructor(`PSpec::Given`,
+		func(d px.Dispatch) {
+			d.RepeatedParam2(types.NewVariantType(types.DefaultStringType(), types.NewGoRuntimeType((*Input)(nil)), types.NewGoRuntimeType((*LazyValue)(nil))))
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				argc := len(args)
 				inputs := make([]Input, argc)
 				for idx := 0; idx < argc; idx++ {
 					arg := args[idx]
 					switch arg.(type) {
-					case eval.StringValue:
+					case px.StringValue:
 						inputs[idx] = &Source{[]*source{{arg, false}}}
 					default:
 						v := arg.(*types.RuntimeValue).Interface()
@@ -373,26 +372,26 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Settings`,
-		func(d eval.Dispatch) {
+	px.NewGoConstructor(`PSpec::Settings`,
+		func(d px.Dispatch) {
 			d.Param(`Any`)
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				return types.WrapRuntime(&SettingsInput{args[0]})
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Scope`,
-		func(d eval.Dispatch) {
+	px.NewGoConstructor(`PSpec::Scope`,
+		func(d px.Dispatch) {
 			d.Param(`Hash[Pattern[/\A[a-z_]\w*\z/],Any]`)
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				return types.WrapRuntime(&ScopeInput{args[0]})
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Source`,
-		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+	px.NewGoConstructor(`PSpec::Source`,
+		func(d px.Dispatch) {
+			d.RepeatedParam2(types.NewVariantType(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				argc := len(args)
 				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -402,10 +401,10 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Epp_source`,
-		func(d eval.Dispatch) {
-			d.RepeatedParam2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+	px.NewGoConstructor(`PSpec::Epp_source`,
+		func(d px.Dispatch) {
+			d.RepeatedParam2(types.NewVariantType(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				argc := len(args)
 				sources := make([]*source, argc)
 				for idx := 0; idx < argc; idx++ {
@@ -415,35 +414,35 @@ func init() {
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Named_source`,
-		func(d eval.Dispatch) {
+	px.NewGoConstructor(`PSpec::Named_source`,
+		func(d px.Dispatch) {
 			d.Param(`String`)
-			d.Param2(types.NewVariantType2(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Param2(types.NewVariantType(types.DefaultStringType(), types.NewGoRuntimeType((*LazyValue)(nil))))
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				return types.WrapRuntime(&NamedSource{source{args[1], false}, args[0].String()})
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Unindent`,
-		func(d eval.Dispatch) {
+	px.NewGoConstructor(`PSpec::Unindent`,
+		func(d px.Dispatch) {
 			d.Param(`String`)
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				return types.WrapString(issue.Unindent(args[0].String()))
 			})
 		})
 
-	eval.NewGoConstructor(`PSpec::Parser_options`,
-		func(d eval.Dispatch) {
+	px.NewGoConstructor(`PSpec::Parser_options`,
+		func(d px.Dispatch) {
 			d.Param(`Hash[Pattern[/[a-z_]*/],Data]`)
-			d.Function(func(c eval.Context, args []eval.Value) eval.Value {
+			d.Function(func(c px.Context, args []px.Value) px.Value {
 				return types.WrapRuntime(&ParserOptions{args[0].(*types.HashValue)})
 			})
 		})
 }
 
-func splatNodes(args eval.List) []Node {
+func splatNodes(args px.List) []Node {
 	nodes := make([]Node, 0)
-	args.Each(func(arg eval.Value) {
+	args.Each(func(arg px.Value) {
 		if rv, ok := arg.(*types.RuntimeValue); ok {
 			nodes = append(nodes, rv.Interface().(Node))
 		} else {

@@ -1,21 +1,22 @@
 package pspec
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/impl"
-	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/puppet-evaluator/evaluator"
+	"github.com/lyraproj/puppet-evaluator/pdsl"
 	"github.com/lyraproj/puppet-parser/parser"
 )
 
 type (
 	specEval struct {
-		eval.Evaluator
+		pdsl.Evaluator
 		path []parser.Expression
 	}
 )
 
-var PSPEC_QREFS = map[string]string{
+var pspecQRefs = map[string]string{
 	`Contain`:        `PSpec::Contain`,
 	`Directory`:      `PSpec::Directory`,
 	`Epp_source`:     `PSpec::Epp_source`,
@@ -47,24 +48,21 @@ var PSPEC_QREFS = map[string]string{
 	`Unindent`:       `PSpec::Unindent`,
 }
 
-const TEST_NODES = `testNodes`
+const testNodes = `testNodes`
 
-func NewSpecEvaluator(c eval.Context) eval.Evaluator {
-	return &specEval{Evaluator: impl.NewEvaluator(c), path: make([]parser.Expression, 0)}
+func NewSpecEvaluator(c pdsl.EvaluationContext) pdsl.Evaluator {
+	return &specEval{Evaluator: evaluator.NewEvaluator(c), path: make([]parser.Expression, 0)}
 }
 
 func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, args issue.H) issue.Reported {
 	return issue.NewReported(issueCode, issue.SEVERITY_ERROR, args, semantic)
 }
 
-func CreateTests(c eval.Context, expression parser.Expression) []Test {
-	c.Set(TEST_NODES, make([]Node, 0))
+func CreateTests(c pdsl.EvaluationContext, expression parser.Expression) []Test {
+	c.Set(testNodes, make([]Node, 0))
 	c.AddDefinitions(expression)
-	_, err := eval.TopEvaluate(c, expression)
-	if err != nil {
-		panic(err)
-	}
-	ns, _ := c.Get(TEST_NODES)
+	pdsl.TopEvaluate(c, expression)
+	ns, _ := c.Get(testNodes)
 	nodes := ns.([]Node)
 	tests := make([]Test, len(nodes))
 	for i, node := range nodes {
@@ -73,27 +71,27 @@ func CreateTests(c eval.Context, expression parser.Expression) []Test {
 	return tests
 }
 
-func (s *specEval) Eval(expression parser.Expression) eval.Value {
+func (s *specEval) Eval(expression parser.Expression) px.Value {
 	switch expression.(type) {
 	case *parser.BlockExpression:
-		return s.eval_BlockExpression(expression.(*parser.BlockExpression))
+		return s.evalBlockExpression(expression.(*parser.BlockExpression))
 	case *parser.QualifiedReference:
-		return s.eval_QualifiedReference(expression.(*parser.QualifiedReference))
+		return s.evalQualifiedReference(expression.(*parser.QualifiedReference))
 	case *parser.CallNamedFunctionExpression:
-		return s.eval_CallNamedFunctionExpression(expression.(*parser.CallNamedFunctionExpression))
+		return s.evalCallNamedFunctionExpression(expression.(*parser.CallNamedFunctionExpression))
 	default:
-		return impl.BasicEval(s, expression)
+		return evaluator.BasicEval(s, expression)
 	}
 }
 
-func addNode(c eval.Context, n Node) {
-	nodes, _ := c.Get(TEST_NODES)
-	c.Set(TEST_NODES, append(nodes.([]Node), n))
+func addNode(c px.Context, n Node) {
+	nodes, _ := c.Get(testNodes)
+	c.Set(testNodes, append(nodes.([]Node), n))
 }
 
-func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression) eval.Value {
+func (s *specEval) evalBlockExpression(expr *parser.BlockExpression) px.Value {
 	stmts := expr.Statements()
-	result := eval.Value(eval.UNDEF)
+	result := px.Value(px.Undef)
 	oldPath := s.path
 
 	p := make([]parser.Expression, len(s.path), len(s.path)+1)
@@ -118,23 +116,23 @@ func (s *specEval) eval_BlockExpression(expr *parser.BlockExpression) eval.Value
 	return result
 }
 
-func (s *specEval) eval_QualifiedReference(qr *parser.QualifiedReference) eval.Value {
+func (s *specEval) evalQualifiedReference(qr *parser.QualifiedReference) px.Value {
 	if i, ok := issue.IssueForCode2(issue.Code(qr.Name())); ok {
 		return types.WrapRuntime(i)
 	}
-	if p, ok := PSPEC_QREFS[qr.Name()]; ok {
+	if p, ok := pspecQRefs[qr.Name()]; ok {
 		qr = qr.WithName(p)
 	}
-	return impl.BasicEval(s, qr)
+	return evaluator.BasicEval(s, qr)
 }
 
-func (s *specEval) eval_CallNamedFunctionExpression(call *parser.CallNamedFunctionExpression) eval.Value {
+func (s *specEval) evalCallNamedFunctionExpression(call *parser.CallNamedFunctionExpression) px.Value {
 	if qr, ok := call.Functor().(*parser.QualifiedReference); ok {
-		if p, ok := PSPEC_QREFS[qr.Name()]; ok {
+		if p, ok := pspecQRefs[qr.Name()]; ok {
 			call = call.WithFunctor(qr.WithName(p))
 		}
 	}
-	return impl.BasicEval(s, call)
+	return evaluator.BasicEval(s, call)
 }
 
 func hasError(issues []issue.Reported) bool {

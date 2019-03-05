@@ -4,16 +4,6 @@ Examples('ToDataConverter',
       Given(`to_data(SemVer('1.2.3'), message_prefix => 'x', rich_data => false)`),
       Evaluates_to('1.2.3'),
       Evaluates_with(Warning(Issue(EVAL_SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, 'klass' => 'SemVer', 'value' => '1.2.3')))),
-
-    Example('silently converts Symbol to String if symbol_as_string is true',
-      Given(`to_data(to_symbol('sym'), message_prefix => 'x', rich_data => false, symbol_as_string => true)`),
-      Evaluates_to('sym'),
-      Evaluates_ok()),
-
-    Example('converts Symbol to String with warning if symbol_as_string is false',
-      Given(`to_data(to_symbol('sym'), message_prefix => 'x', rich_data => false, symbol_as_string => false)`),
-      Evaluates_to('sym'),
-      Evaluates_with(Warning(Issue(EVAL_SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, 'klass' => 'Symbol', 'value' => 'sym')))),
   ),
 
   Examples('with rich_data == true',
@@ -30,16 +20,6 @@ Examples('ToDataConverter',
     Example('converts Sensitive with SemVer to rich data hash',
       Given(`to_data(Sensitive(SemVer('1.2.3')), message_prefix => 'x', rich_data => true)`),
       Evaluates_to('__ptype' => 'Sensitive', '__pvalue' => { '__ptype' => 'SemVer', '__pvalue' => '1.2.3'}),
-      Evaluates_ok()),
-
-    Example('silently converts Symbol to String if symbol_as_string is true',
-      Given(`to_data(to_symbol('sym'), message_prefix => 'x', rich_data => true, symbol_as_string => true)`),
-      Evaluates_to('sym'),
-      Evaluates_ok()),
-
-    Example('converts Symbol to rich data hash if symbol_as_string is false',
-      Given(`to_data(to_symbol('sym'), message_prefix => 'x', rich_data => true, symbol_as_string => false)`),
-      Evaluates_to('__ptype' => 'Symbol', '__pvalue' => 'sym'),
       Evaluates_ok()),
 
     Example('converts Error to rich data hash',

@@ -1,25 +1,27 @@
 package pspec
 
 import (
+	"github.com/lyraproj/puppet-evaluator/evaluator"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/impl"
-	"github.com/lyraproj/puppet-evaluator/pcore"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/puppet-parser/parser"
+
+	// Ensure that all functions are loaded
+	_ "github.com/lyraproj/puppet-evaluator/functions"
 )
 
-func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.DefiningLoader) {
+func RunPspecTests(t *testing.T, testRoot string, initializer func() px.DefiningLoader) {
 	t.Helper()
-	pcore.InitializePuppet()
 
 	if initializer != nil {
-		err := eval.Puppet.Try(func(c eval.Context) error {
-			c.DoWithLoader(initializer(), c.ResolveResolvables)
+		err := pcore.Try(func(c px.Context) error {
+			c.DoWithLoader(initializer(), func() { px.ResolveResolvables(c) })
 			return nil
 		})
 		if err != nil {
@@ -41,7 +43,7 @@ func RunPspecTests(t *testing.T, testRoot string, initializer func() eval.Defini
 		return
 	}
 	tests := make([]Test, 0, 100)
-	c := impl.NewContext(NewSpecEvaluator, eval.NewParentedLoader(eval.Puppet.SystemLoader()), eval.Puppet.Logger())
+	c := evaluator.NewContext(NewSpecEvaluator, px.NewParentedLoader(pcore.SystemLoader()), pcore.Logger())
 	for _, testFile := range testFiles {
 		tests = append(tests, CreateTests(c, parseTestContents(t, testFile))...)
 	}
@@ -55,7 +57,7 @@ func runTests(t *testing.T, tests []Test, parentContext *TestContext) {
 		ctx := &TestContext{
 			parent:         parentContext,
 			tearDowns:      make([]Housekeeping, 0),
-			accessedValues: make(map[int64]eval.Value, 32),
+			accessedValues: make(map[int64]px.Value, 32),
 			node:           test.Node()}
 
 		if testExec, ok := test.(*TestExecutable); ok {
@@ -93,7 +95,7 @@ func (a *assertions) Fail(message string) {
 }
 
 func (a *assertions) AssertEquals(expected interface{}, actual interface{}) {
-	if !eval.Equals(expected, actual) {
+	if !px.Equals(expected, actual) {
 		a.t.Errorf("expected %T '%v', got %T '%v'\n", expected, expected, actual, actual)
 	}
 }
