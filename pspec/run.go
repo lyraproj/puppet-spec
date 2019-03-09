@@ -95,7 +95,7 @@ func (a *assertions) Fail(message string) {
 }
 
 func (a *assertions) AssertEquals(expected interface{}, actual interface{}) {
-	if !px.Equals(expected, actual) {
+	if !px.Equals(expected, actual, nil) {
 		a.t.Errorf("expected %T '%v', got %T '%v'\n", expected, expected, actual, actual)
 	}
 }

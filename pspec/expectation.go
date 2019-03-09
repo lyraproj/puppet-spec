@@ -235,7 +235,7 @@ func (im *IssueMatch) MatchIssue(issue issue.Reported) bool {
 			}
 			return false
 		} else {
-			if !px.Equals(a, px.Wrap(nil, v)) {
+			if !px.Equals(a, px.Wrap(nil, v), nil) {
 				return false
 			}
 		}
