@@ -229,7 +229,7 @@ func (p *ParseResult) setExample(example *Example) {
 func (s *SettingsInput) CreateTests(expected Result) []Executable {
 	// Settings input does not create any tests
 	return []Executable{func(tc *TestContext, assertions Assertions) {
-		settings, ok := tc.resolveLazyValue(s.settings).(*types.HashValue)
+		settings, ok := tc.resolveLazyValue(s.settings).(*types.Hash)
 		if !ok {
 			panic(px.Error(ValueNotHash, issue.H{`type`: `Settings`}))
 		}
@@ -241,7 +241,7 @@ func (s *SettingsInput) CreateTests(expected Result) []Executable {
 
 func (s *ScopeInput) CreateTests(expected Result) []Executable {
 	return []Executable{func(tc *TestContext, assertions Assertions) {
-		scope, ok := tc.resolveLazyValue(s.scope).(*types.HashValue)
+		scope, ok := tc.resolveLazyValue(s.scope).(*types.Hash)
 		if !ok {
 			panic(px.Error(ValueNotHash, issue.H{`type`: `Scope`}))
 		}
@@ -435,7 +435,7 @@ func init() {
 		func(d px.Dispatch) {
 			d.Param(`Hash[Pattern[/[a-z_]*/],Data]`)
 			d.Function(func(c px.Context, args []px.Value) px.Value {
-				return types.WrapRuntime(&ParserOptions{args[0].(*types.HashValue)})
+				return types.WrapRuntime(&ParserOptions{args[0].(*types.Hash)})
 			})
 		})
 }
@@ -446,7 +446,7 @@ func splatNodes(args px.List) []Node {
 		if rv, ok := arg.(*types.RuntimeValue); ok {
 			nodes = append(nodes, rv.Interface().(Node))
 		} else {
-			nodes = append(nodes, splatNodes(arg.(*types.ArrayValue))...)
+			nodes = append(nodes, splatNodes(arg.(*types.Array))...)
 		}
 	})
 	return nodes

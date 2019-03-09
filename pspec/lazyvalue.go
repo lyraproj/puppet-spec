@@ -104,7 +104,7 @@ func (dv *DirectoryValue) Get(tc *TestContext) px.Value {
 	if err != nil {
 		panic(err)
 	}
-	dir, ok := tc.resolveLazyValue(dv.content).(*types.HashValue)
+	dir, ok := tc.resolveLazyValue(dv.content).(*types.Hash)
 	if !ok {
 		panic(px.Error(ValueNotHash, issue.H{`type`: `Directory`}))
 	}
@@ -168,11 +168,11 @@ func (ls *LazyScope) State(name string) pdsl.VariableState {
 	return ls.BasicScope.State(name)
 }
 
-func makeDirectories(parent string, hash *types.HashValue) {
+func makeDirectories(parent string, hash *types.Hash) {
 	hash.EachPair(func(key, value px.Value) {
 		name := key.String()
 		path := filepath.Join(parent, name)
-		if dir, ok := value.(*types.HashValue); ok {
+		if dir, ok := value.(*types.Hash); ok {
 			err := os.Mkdir(path, 0755)
 			if err != nil {
 				panic(err)
@@ -186,11 +186,11 @@ func makeDirectories(parent string, hash *types.HashValue) {
 
 func writeFileValue(path string, value px.Value) {
 	var err error
-	switch value.(type) {
+	switch value := value.(type) {
 	case px.StringValue:
 		err = ioutil.WriteFile(path, []byte(value.String()), 0644)
-	case *types.BinaryValue:
-		err = ioutil.WriteFile(path, value.(*types.BinaryValue).Bytes(), 0644)
+	case *types.Binary:
+		err = ioutil.WriteFile(path, value.Bytes(), 0644)
 	default:
 		panic(px.Error(InvalidFileContent, issue.H{`value`: value}))
 	}

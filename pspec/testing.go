@@ -80,15 +80,15 @@ func (tc *TestContext) ParserOptions() []parser.Option {
 		tc.parserOptions.EachPair(func(k, v px.Value) {
 			switch k.String() {
 			case `tasks`:
-				if b, ok := v.(px.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(px.Boolean); ok && b.Bool() {
 					o = append(o, parser.PARSER_TASKS_ENABLED)
 				}
 			case `hex_escapes`:
-				if b, ok := v.(px.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(px.Boolean); ok && b.Bool() {
 					o = append(o, parser.PARSER_HANDLE_HEX_ESCAPES)
 				}
 			case `backtick_strings`:
-				if b, ok := v.(px.BooleanValue); ok && b.Bool() {
+				if b, ok := v.(px.Boolean); ok && b.Bool() {
 					o = append(o, parser.PARSER_HANDLE_BACKTICK_STRINGS)
 				}
 			}
@@ -133,16 +133,16 @@ func (tc *TestContext) resolveLazyValue(v px.Value) px.Value {
 			return lg.Get(tc)
 		}
 		return v
-	case *types.HashValue:
-		oe := v.(*types.HashValue)
+	case *types.Hash:
+		oe := v.(*types.Hash)
 		ne := make([]*types.HashEntry, oe.Len())
 		oe.EachWithIndex(func(v px.Value, i int) {
 			e := v.(*types.HashEntry)
 			ne[i] = types.WrapHashEntry(tc.resolveLazyValue(e.Key()), tc.resolveLazyValue(e.Value()))
 		})
 		return types.WrapHash(ne)
-	case *types.ArrayValue:
-		return types.WrapValues(tc.resolveLazyValues(v.(*types.ArrayValue)))
+	case *types.Array:
+		return types.WrapValues(tc.resolveLazyValues(v.(*types.Array)))
 	default:
 		return v
 	}

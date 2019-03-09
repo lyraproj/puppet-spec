@@ -298,8 +298,8 @@ func makeMatches(name string, args []px.Value) (result []Match) {
 		case px.StringValue:
 			result[ix] = &StringMatch{false, arg.String()}
 			continue
-		case *types.RegexpValue:
-			result[ix] = &RegexpMatch{arg.(*types.RegexpValue).Regexp()}
+		case *types.Regexp:
+			result[ix] = &RegexpMatch{arg.(*types.Regexp).Regexp()}
 			continue
 		case *types.RuntimeValue:
 			x := arg.(*types.RuntimeValue).Interface()
@@ -312,7 +312,7 @@ func makeMatches(name string, args []px.Value) (result []Match) {
 				continue
 			}
 		}
-		panic(types.NewIllegalArgumentType(name, ix, `Variant[String,Regexp,Issue,Match]`, arg))
+		panic(px.Error(px.IllegalArgumentType, issue.H{`function`: name, `index`: ix, `expected`: `Variant[String,Regexp,Issue,Match]`, `actual`: arg.PType()}))
 	}
 	return
 }
@@ -321,8 +321,8 @@ func makeIssueArgMatch(arg px.Value) interface{} {
 	switch arg.(type) {
 	case px.StringValue:
 		return &StringMatch{false, arg.String()}
-	case *types.RegexpValue:
-		return &RegexpMatch{arg.(*types.RegexpValue).Regexp()}
+	case *types.Regexp:
+		return &RegexpMatch{arg.(*types.Regexp).Regexp()}
 	case *types.RuntimeValue:
 		return arg.(*types.RuntimeValue).Interface()
 	}
@@ -336,8 +336,8 @@ func makeExpectations(name string, level px.LogLevel, args []px.Value) (result [
 		case px.StringValue:
 			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&StringMatch{false, arg.String()}}}}}
 			continue
-		case *types.RegexpValue:
-			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&RegexpMatch{arg.(*types.RegexpValue).Regexp()}}}}}
+		case *types.Regexp:
+			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&RegexpMatch{arg.(*types.Regexp).Regexp()}}}}}
 			continue
 		case *types.RuntimeValue:
 			x := arg.(*types.RuntimeValue).Interface()
@@ -356,7 +356,7 @@ func makeExpectations(name string, level px.LogLevel, args []px.Value) (result [
 				continue
 			}
 		}
-		panic(types.NewIllegalArgumentType(name, ix, `Variant[String,Regexp,Issue,Match,Include,Exclude]`, arg))
+		panic(px.Error(px.IllegalArgumentType, issue.H{`function`: name, `index`: ix, `expected`: `Variant[String,Regexp,Issue,Match,Include,Exclude]`, `actual`: arg.PType()}))
 	}
 	return
 }
@@ -443,7 +443,7 @@ func init() {
 				var argsMap *hash.StringHash
 				if len(args) > 1 {
 					argsMap = hash.NewStringHash(5)
-					args[1].(*types.HashValue).EachPair(func(k, v px.Value) {
+					args[1].(*types.Hash).EachPair(func(k, v px.Value) {
 						argsMap.Put(k.String(), makeIssueArgMatch(v))
 					})
 				}
