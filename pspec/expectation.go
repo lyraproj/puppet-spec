@@ -219,17 +219,17 @@ func (im *IssueMatch) MatchIssue(issue issue.Reported) bool {
 		}
 		a := im.argsMap.Get(k, nil)
 		if m, ok := a.(Match); ok {
-			switch v.(type) {
+			switch v := v.(type) {
 			case string:
-				if m.MatchString(v.(string)) {
+				if m.MatchString(v) {
 					continue
 				}
 			case byte:
-				if m.MatchString(string([]byte{v.(byte)})) {
+				if m.MatchString(string([]byte{v})) {
 					continue
 				}
 			case rune:
-				if m.MatchString(string([]rune{v.(rune)})) {
+				if m.MatchString(string([]rune{v})) {
 					continue
 				}
 			}
@@ -294,15 +294,15 @@ var expectationsType = types.NewVariantType(types.DefaultStringType(), types.Def
 func makeMatches(name string, args []px.Value) (result []Match) {
 	result = make([]Match, len(args))
 	for ix, arg := range args {
-		switch arg.(type) {
+		switch arg := arg.(type) {
 		case px.StringValue:
 			result[ix] = &StringMatch{false, arg.String()}
 			continue
 		case *types.Regexp:
-			result[ix] = &RegexpMatch{arg.(*types.Regexp).Regexp()}
+			result[ix] = &RegexpMatch{arg.Regexp()}
 			continue
 		case *types.RuntimeValue:
-			x := arg.(*types.RuntimeValue).Interface()
+			x := arg.Interface()
 			switch x.(type) {
 			case issue.Issue:
 				result[ix] = &IssueMatch{x.(issue.Issue), nil}
@@ -318,13 +318,13 @@ func makeMatches(name string, args []px.Value) (result []Match) {
 }
 
 func makeIssueArgMatch(arg px.Value) interface{} {
-	switch arg.(type) {
+	switch arg := arg.(type) {
 	case px.StringValue:
 		return &StringMatch{false, arg.String()}
 	case *types.Regexp:
-		return &RegexpMatch{arg.(*types.Regexp).Regexp()}
+		return &RegexpMatch{arg.Regexp()}
 	case *types.RuntimeValue:
-		return arg.(*types.RuntimeValue).Interface()
+		return arg.Interface()
 	}
 	return arg
 }
@@ -332,27 +332,26 @@ func makeIssueArgMatch(arg px.Value) interface{} {
 func makeExpectations(name string, level px.LogLevel, args []px.Value) (result []*LevelExpectation) {
 	result = make([]*LevelExpectation, len(args))
 	for ix, arg := range args {
-		switch arg.(type) {
+		switch arg := arg.(type) {
 		case px.StringValue:
 			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&StringMatch{false, arg.String()}}}}}
 			continue
 		case *types.Regexp:
-			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&RegexpMatch{arg.(*types.Regexp).Regexp()}}}}}
+			result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&RegexpMatch{arg.Regexp()}}}}}
 			continue
 		case *types.RuntimeValue:
-			x := arg.(*types.RuntimeValue).Interface()
-			switch x.(type) {
+			switch x := arg.Interface().(type) {
 			case issue.Issue:
-				result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&IssueMatch{x.(issue.Issue), nil}}}}}
+				result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{&IssueMatch{x, nil}}}}}
 				continue
 			case *Include:
-				result[ix] = &LevelExpectation{level: level, includes: []*Include{x.(*Include)}}
+				result[ix] = &LevelExpectation{level: level, includes: []*Include{x}}
 				continue
 			case *Exclude:
-				result[ix] = &LevelExpectation{level: level, excludes: []*Exclude{x.(*Exclude)}}
+				result[ix] = &LevelExpectation{level: level, excludes: []*Exclude{x}}
 				continue
 			case Match:
-				result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{x.(Match)}}}}
+				result[ix] = &LevelExpectation{level: level, includes: []*Include{{[]Match{x}}}}
 				continue
 			}
 		}

@@ -21,5 +21,5 @@ Examples('the lest function',
 
   Example('errors when lambda wants too many args',
     Given(`lest(1) |$x| { }`),
-    Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR, message => /block expects no arguments, got 1/)))),
+    Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS, message => /block expects no arguments, got 1/)))),
 )

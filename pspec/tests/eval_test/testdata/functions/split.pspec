@@ -2,11 +2,11 @@ Examples('the split function',
   Examples('raises an error when',
     Example('called with less than two arguments',
      Given(`split('a,b')`),
-     Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR, message => /expects 2 arguments, got 1/)))),
+     Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS, message => /expects 2 arguments, got 1/)))),
 
     Example('called with more than two arguments',
      Given(`split('a,b', 'foo', 'bar')`),
-     Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR, message => /expects 2 arguments, got 3/)))),
+     Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS, message => /expects 2 arguments, got 3/)))),
 
     Example('called with malformed regexp',
      Given(`split('a,b', ')')`),

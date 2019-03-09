@@ -33,5 +33,5 @@ Examples('Init type',
 
   Example('Init[String,23] raises an error because no available dispatcher exists',
     Given(`Init[String,23](128)`),
-    Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR)))),
+    Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS)))),
 )

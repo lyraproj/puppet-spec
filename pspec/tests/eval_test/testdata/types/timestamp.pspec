@@ -147,7 +147,7 @@ Examples('Timestamp type',
       Given(@(SRC)),
         Timestamp('2015-03-01T11:12:13', [])
         |-SRC
-      Evaluates_with(Error(EVAL_ARGUMENTS_ERROR))),
+      Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENTS))),
 
     Example('can be created from a integer that represents seconds',
       Given(@(SRC)),

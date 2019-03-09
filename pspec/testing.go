@@ -124,25 +124,24 @@ func (tc *TestContext) registerTearDown(td Housekeeping) {
 }
 
 func (tc *TestContext) resolveLazyValue(v px.Value) px.Value {
-	switch v.(type) {
+	switch v := v.(type) {
 	case *types.RuntimeValue:
-		if lv, ok := v.(*types.RuntimeValue).Interface().(LazyComputedValue); ok {
+		if lv, ok := v.Interface().(LazyComputedValue); ok {
 			return tc.Get(lv)
 		}
-		if lg, ok := v.(*types.RuntimeValue).Interface().(*LazyValueGet); ok {
+		if lg, ok := v.Interface().(*LazyValueGet); ok {
 			return lg.Get(tc)
 		}
 		return v
 	case *types.Hash:
-		oe := v.(*types.Hash)
-		ne := make([]*types.HashEntry, oe.Len())
-		oe.EachWithIndex(func(v px.Value, i int) {
+		ne := make([]*types.HashEntry, v.Len())
+		v.EachWithIndex(func(v px.Value, i int) {
 			e := v.(*types.HashEntry)
 			ne[i] = types.WrapHashEntry(tc.resolveLazyValue(e.Key()), tc.resolveLazyValue(e.Value()))
 		})
 		return types.WrapHash(ne)
 	case *types.Array:
-		return types.WrapValues(tc.resolveLazyValues(v.(*types.Array)))
+		return types.WrapValues(tc.resolveLazyValues(v))
 	default:
 		return v
 	}

@@ -25,7 +25,7 @@ Examples('the sprintf function',
 
   Example('raises a key error if a key is not present',
     Given(`sprintf('%<foo>d : %<zanzibar>f', 'foo' => 1, 'bar' => 2)`),
-    Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENT, /key<zanzibar> not found/))),
+    Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENT, {arg => /key<zanzibar> not found/})))),
 
   Example('a hash with string keys that is output formats as strings',
     Given(`sprintf('%s', 'foo' => 1, 'bar' => 2)`),

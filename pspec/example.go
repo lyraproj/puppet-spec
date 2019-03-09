@@ -93,13 +93,11 @@ type (
 )
 
 func pathContentAndEpp(src interface{}) (path string, content px.Value, epp bool) {
-	switch src.(type) {
+	switch src := src.(type) {
 	case *source:
-		s := src.(*source)
-		return ``, s.code, s.epp
+		return ``, src.code, src.epp
 	case *NamedSource:
-		ns := src.(*NamedSource)
-		return ns.name, ns.code, ns.epp
+		return src.name, src.code, src.epp
 	default:
 		panic(px.Error(px.Failure, issue.H{`message`: fmt.Sprintf(`Unknown source type %T`, src)}))
 	}

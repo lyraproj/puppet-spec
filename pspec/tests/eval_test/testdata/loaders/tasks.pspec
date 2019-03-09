@@ -188,7 +188,7 @@ Examples('tasks are loaded',
       Given(@(SRC)),
         String(load_task('mod::hello'))
         |-SRC
-      Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`unrecognized key 'supports_nop'`)))),
+      Evaluates_with(Issue(EVAL_ILLEGAL_ARGUMENTS, 'message' => Contain(`unrecognized key 'supports_nop'`)))),
 
     Example('metadata has a malformed parameter name',
       Let('module_path', Directory(
@@ -209,7 +209,7 @@ Examples('tasks are loaded',
       Given(@(SRC)),
         String(load_task('mod::hello'))
         |-SRC
-      Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`key of entry 'Message' expects a match for Pattern[/\\A[a-z][a-z0-9_]*\\z/]`)))),
+      Evaluates_with(Issue(EVAL_ILLEGAL_ARGUMENTS, 'message' => Contain(`key of entry 'Message' expects a match for Pattern[/\\A[a-z][a-z0-9_]*\\z/]`)))),
 
     Example('metadata has a puppet_task_version that is a string',
       Let('module_path', Directory(
@@ -231,6 +231,6 @@ Examples('tasks are loaded',
       Given(@(SRC)),
         String(load_task('mod::hello'))
         |-SRC
-      Evaluates_with(Issue(EVAL_ARGUMENTS_ERROR, 'message' => Contain(`'puppet_task_version' expects an Integer value, got String`)))),
+      Evaluates_with(Issue(EVAL_ILLEGAL_ARGUMENTS, 'message' => Contain(`'puppet_task_version' expects an Integer value, got String`)))),
   ),
 )

@@ -72,13 +72,13 @@ func CreateTests(c pdsl.EvaluationContext, expression parser.Expression) []Test 
 }
 
 func (s *specEval) Eval(expression parser.Expression) px.Value {
-	switch expression.(type) {
+	switch expression := expression.(type) {
 	case *parser.BlockExpression:
-		return s.evalBlockExpression(expression.(*parser.BlockExpression))
+		return s.evalBlockExpression(expression)
 	case *parser.QualifiedReference:
-		return s.evalQualifiedReference(expression.(*parser.QualifiedReference))
+		return s.evalQualifiedReference(expression)
 	case *parser.CallNamedFunctionExpression:
-		return s.evalCallNamedFunctionExpression(expression.(*parser.CallNamedFunctionExpression))
+		return s.evalCallNamedFunctionExpression(expression)
 	default:
 		return evaluator.BasicEval(s, expression)
 	}

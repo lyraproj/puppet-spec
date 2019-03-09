@@ -33,5 +33,5 @@ Examples('The dig function',
 
   Example('errors if not given a non Collection as the starting point',
     Given(`"hello".dig(1, yes, 2)`),
-    Evaluates_with(Error(EVAL_ARGUMENTS_ERROR))),
+    Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENTS))),
 )

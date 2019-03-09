@@ -137,7 +137,7 @@ Examples('Binary',
     Given(`String(Binary('++//'), '%u')`), Evaluates_to(`--__`)),
 
   Example('refuses to do %s on strings containing illegal unicode constructs',
-    Given(`String(Binary('apa=', '%b'), '%s')`), Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENT, message => Contain(`binary data is not valid UTF-8`))))),
+    Given(`String(Binary('apa=', '%b'), '%s')`), Evaluates_with(Error(Issue(EVAL_FAILURE, message => Contain(`binary data is not valid UTF-8`))))),
 
   Example('%s formats as unquoted string with valid UTF-8 chars',
     Given(`String(Binary([0xee, 0x8c, 0x98]), '%s')`), Evaluates_to("\uE318")),

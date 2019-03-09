@@ -46,7 +46,7 @@ Examples('call function',
         }
         foo()
       `)),
-      Evaluates_with(Error(EVAL_ARGUMENTS_ERROR))),
+      Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENT_TYPE))),
   ),
 
   Examples('defined in Go',
@@ -69,7 +69,7 @@ Examples('call function',
 
       Example('incompatible type and incompatible block',
         Given(`assert_type(String, 23) |$t| { 0 }`),
-        Evaluates_with(Error(EVAL_ARGUMENTS_ERROR))),
+        Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENTS))),
 
       Example('type as string',
         Given(`assert_type('Variant[String, Integer]', 23)`),

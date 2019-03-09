@@ -17,9 +17,9 @@ Examples('the then function',
 
   Example('errors when lambda wants too many args',
     Given(`then(1) |$x, $y| { }`),
-    Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR, message => /block expects 1 argument, got 2/)))),
+    Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS, message => /block expects 1 argument, got 2/)))),
 
   Example('errors when lambda wants too few args',
     Given(`then(1) || { }`),
-    Evaluates_with(Error(Issue(EVAL_ARGUMENTS_ERROR, message => /block expects 1 argument, got none/)))),
+    Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS, message => /block expects 1 argument, got none/)))),
 )
