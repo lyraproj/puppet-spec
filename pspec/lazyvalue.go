@@ -153,7 +153,11 @@ func (q *FormatValue) Get(tc *TestContext) px.Value {
 	panic(px.Error(FormatNotString, issue.NO_ARGS))
 }
 
-func (ls *LazyScope) Get(name string) (value px.Value, found bool) {
+func (ls *LazyScope) Get(name px.Value) (value px.Value, found bool) {
+	return ls.Get2(name.String())
+}
+
+func (ls *LazyScope) Get2(name string) (value px.Value, found bool) {
 	tc := ls.ctx
 	if lv, ok := tc.getLazyValue(name); ok {
 		if ng, ok := lv.(*LazyValueGet); ok {
@@ -161,7 +165,7 @@ func (ls *LazyScope) Get(name string) (value px.Value, found bool) {
 		}
 		return tc.Get(lv.(LazyComputedValue)), true
 	}
-	return ls.BasicScope.Get(name)
+	return ls.BasicScope.Get2(name)
 }
 
 func (ls *LazyScope) State(name string) pdsl.VariableState {
