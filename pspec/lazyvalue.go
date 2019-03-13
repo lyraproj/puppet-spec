@@ -10,7 +10,6 @@ import (
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/puppet-evaluator/evaluator"
-	"github.com/lyraproj/puppet-evaluator/pdsl"
 )
 
 type (
@@ -168,7 +167,7 @@ func (ls *LazyScope) Get2(name string) (value px.Value, found bool) {
 	return ls.BasicScope.Get2(name)
 }
 
-func (ls *LazyScope) State(name string) pdsl.VariableState {
+func (ls *LazyScope) State(name string) px.VariableState {
 	return ls.BasicScope.State(name)
 }
 

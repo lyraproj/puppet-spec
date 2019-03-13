@@ -2,7 +2,6 @@ package pspec
 
 import (
 	"bytes"
-	"github.com/lyraproj/puppet-evaluator/pdsl"
 	"regexp"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/pcore/utils"
+	"github.com/lyraproj/puppet-evaluator/pdsl"
 	"github.com/lyraproj/puppet-parser/parser"
 )
 

@@ -1,8 +1,9 @@
 package parser_test
 
 import (
-	"github.com/lyraproj/puppet-spec/pspec"
 	"testing"
+
+	"github.com/lyraproj/puppet-spec/pspec"
 )
 
 func TestAll(t *testing.T) {

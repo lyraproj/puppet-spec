@@ -1,12 +1,12 @@
 package servicesdk_test
 
 import (
-	"github.com/lyraproj/puppet-spec/pspec"
 	"testing"
 
+	"github.com/lyraproj/puppet-spec/pspec"
+
 	// Ensure initialization of servicesdk
-	_ "github.com/lyraproj/servicesdk/annotation"
-	_ "github.com/lyraproj/servicesdk/wf"
+	_ "github.com/lyraproj/servicesdk/service"
 )
 
 func TestAll(t *testing.T) {

@@ -1,7 +1,6 @@
 package pspec
 
 import (
-	"github.com/lyraproj/puppet-evaluator/evaluator"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/puppet-evaluator/evaluator"
 	"github.com/lyraproj/puppet-parser/parser"
 
 	// Ensure that all functions are loaded
