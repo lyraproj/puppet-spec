@@ -22,7 +22,7 @@ Examples('regexp group variables',
       'cdf' =~ /^(.*)/
       $2
     `)),
-    Evaluates_with(Error(EVAL_UNKNOWN_VARIABLE))),
+    Evaluates_with(Error(PCORE_UNKNOWN_VARIABLE))),
 )
 
 Examples('named variables',

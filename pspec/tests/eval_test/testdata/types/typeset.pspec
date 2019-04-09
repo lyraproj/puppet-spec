@@ -94,7 +94,7 @@ Examples(`TypeSet type`,
           }
           TS::MySecondObject =~ Type
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_DUPLICATE_KEY, key => 'parent')))),
+        Evaluates_with(Error(Issue(PCORE_DUPLICATE_KEY, key => 'parent')))),
 
     ),
   ),
@@ -107,7 +107,7 @@ Examples(`TypeSet type`,
         }
         type(MySet, generalized)
         |-SRC
-      Evaluates_with(Error(EVAL_TYPE_MISMATCH, /expects a value for key 'pcore_version'/))),
+      Evaluates_with(Error(PCORE_TYPE_MISMATCH, /expects a value for key 'pcore_version'/))),
 
     Example('version is invalid',
       Given(@(SRC)),
@@ -117,7 +117,7 @@ Examples(`TypeSet type`,
         }
         type(MySet, generalized)
         |-SRC
-      Evaluates_with(Error(Issue(EVAL_INVALID_VERSION, str => '1.x')))),
+      Evaluates_with(Error(Issue(PCORE_INVALID_VERSION, str => '1.x')))),
 
     Example('pcore_version is invalid',
       Given(@(SRC)),
@@ -126,7 +126,7 @@ Examples(`TypeSet type`,
         }
         type(MySet, generalized)
         |-SRC
-      Evaluates_with(Error(Issue(EVAL_INVALID_VERSION, str => '1.x')))),
+      Evaluates_with(Error(Issue(PCORE_INVALID_VERSION, str => '1.x')))),
 
     Example('pcore_version is not handled by this runtime',
       Given(@(SRC)),
@@ -135,7 +135,7 @@ Examples(`TypeSet type`,
         }
         type(MySet, generalized)
         |-SRC
-      Evaluates_with(Error(Issue(EVAL_UNHANDLED_PCORE_VERSION,
+      Evaluates_with(Error(Issue(PCORE_UNHANDLED_PCORE_VERSION,
         expected_range => SemVerRange('1.x'), pcore_version => SemVer('2.0.0'))))),
 
     Example('name authority is an invalid URI',
@@ -146,7 +146,7 @@ Examples(`TypeSet type`,
         }
         type(MySet, generalized)
         |-SRC
-      Evaluates_with(Error(Issue(EVAL_INVALID_URI,
+      Evaluates_with(Error(Issue(PCORE_INVALID_URI,
         str => 'not a valid URI')))),
 
     Example('pcore_uri an invalid URI',
@@ -157,7 +157,7 @@ Examples(`TypeSet type`,
         }
         type(MySet, generalized)
         |-SRC
-      Evaluates_with(Error(Issue(EVAL_INVALID_URI,
+      Evaluates_with(Error(Issue(PCORE_INVALID_URI,
         str => 'not a valid URI')))),
 
     Examples('a types hash',
@@ -169,7 +169,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'types' expects size to be at least 1, got 0`))))),
+        Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'types' expects size to be at least 1, got 0`))))),
 
       Example('which is not a hash',
         Given(@(SRC)),
@@ -179,7 +179,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'types' expects a Hash value, got Array`))))),
+        Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'types' expects a Hash value, got Array`))))),
 
       Example('contains values that are not types',
         Given(@(SRC)),
@@ -191,7 +191,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'types' key of entry 'car' expects a match for Pattern`))))),
+        Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'types' key of entry 'car' expects a match for Pattern`))))),
     ),
 
     Examples('a references hash that',
@@ -203,7 +203,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' expects size to be at least 1, got 0`))))),
+        Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' expects size to be at least 1, got 0`))))),
 
       Example('is not a hash',
         Given(@(SRC)),
@@ -213,7 +213,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' expects a Hash value, got Array`))))),
+        Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' expects a Hash value, got Array`))))),
 
       Example('contains something other than reference initialization hashes',
         Given(@(SRC)),
@@ -223,7 +223,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' expects a Struct value, got Integer`))))),
+        Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' expects a Struct value, got Integer`))))),
 
       Example('contains several initialization that refers to the same TypeSet',
         Given(@(SRC)),
@@ -236,7 +236,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPESET_REFERENCE_OVERLAP, name => 'MySet', ref_name => 'Vehicle::Cars')))),
+        Evaluates_with(Error(Issue(PCORE_TYPESET_REFERENCE_OVERLAP, name => 'MySet', ref_name => 'Vehicle::Cars')))),
 
       Example('contains an initialization maps with an alias that collides with a type name',
         Given(@(SRC)),
@@ -251,7 +251,7 @@ Examples(`TypeSet type`,
           }
           type(MySet, generalized)
           |-SRC
-        Evaluates_with(Error(Issue(EVAL_TYPESET_ALIAS_COLLIDES, name => 'MySet', ref_alias => 'Car')))),
+        Evaluates_with(Error(Issue(PCORE_TYPESET_ALIAS_COLLIDES, name => 'MySet', ref_alias => 'Car')))),
 
       Examples('contains an initialization hash that',
         Example('has no version range',
@@ -262,7 +262,7 @@ Examples(`TypeSet type`,
             }
             type(MySet, generalized)
             |-SRC
-          Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' expects a value for key 'version_range'`))))),
+          Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' expects a value for key 'version_range'`))))),
 
         Example('has no name',
           Given(@(SRC)),
@@ -272,7 +272,7 @@ Examples(`TypeSet type`,
             }
             type(MySet, generalized)
             |-SRC
-          Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' expects a value for key 'name'`))))),
+          Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' expects a value for key 'name'`))))),
 
         Example('has a name that is not a QRef',
           Given(@(SRC)),
@@ -282,7 +282,7 @@ Examples(`TypeSet type`,
             }
             type(MySet, generalized)
             |-SRC
-          Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' entry 'name' expects a match for Pattern`))))),
+          Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' entry 'Ref' entry 'name' expects a match for Pattern`))))),
 
         Example('has a version_range that is not a valid SemVer range',
           Given(@(SRC)),
@@ -292,7 +292,7 @@ Examples(`TypeSet type`,
             }
             type(MySet, generalized)
             |-SRC
-          Evaluates_with(Error(Issue(EVAL_INVALID_VERSION_RANGE, str => 'N')))),
+          Evaluates_with(Error(Issue(PCORE_INVALID_VERSION_RANGE, str => 'N')))),
 
         Example('has an alias that is not a SimpleName',
           Given(@(SRC)),
@@ -302,7 +302,7 @@ Examples(`TypeSet type`,
             }
             type(MySet, generalized)
             |-SRC
-          Evaluates_with(Error(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`'references' key of entry 'cars' expects a match for Pattern`))))),
+          Evaluates_with(Error(Issue(PCORE_TYPE_MISMATCH, detail => Contain(`'references' key of entry 'cars' expects a match for Pattern`))))),
 
       ),
     ),

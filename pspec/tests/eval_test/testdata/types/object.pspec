@@ -120,7 +120,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(Issue(EVAL_TYPE_MISMATCH, detail => Contain('attribute MyType[a] expects a Type value, got Integer')))),
+         Evaluates_with(PCORE_TYPE_MISMATCH)),
 
       Example('attribute type is missing',
         Given(@(SRC)),
@@ -129,7 +129,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`attribute MyType[a] expects a value for key 'type'`)))),
+         Evaluates_with(PCORE_TYPE_MISMATCH)),
 
       Example('value is of incompatible type',
         Given(@(SRC)),
@@ -138,7 +138,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`attribute MyType[a] expects an Integer value, got String`)))),
+         Evaluates_with(PCORE_TYPE_MISMATCH)),
 
       Example('kind is invalid',
         Given(@(SRC)),
@@ -147,7 +147,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(Issue(EVAL_TYPE_MISMATCH, detail => Contain(
+         Evaluates_with(Issue(PCORE_TYPE_MISMATCH, detail => Contain(
              `entry 'kind' expects a match for Enum['constant', 'derived', 'given_or_derived', 'reference'], got 'derivd'`)))),
 
       Example('kind is constant and no value is declared',
@@ -157,7 +157,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(EVAL_CONSTANT_REQUIRES_VALUE)),
+         Evaluates_with(PCORE_CONSTANT_REQUIRES_VALUE)),
 
       Example('kind is constant and final is false',
         Given(@(SRC)),
@@ -166,7 +166,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(EVAL_CONSTANT_WITH_FINAL)),
+         Evaluates_with(PCORE_CONSTANT_WITH_FINAL)),
 
       Example('attribute and function has the same name',
         Given(@(SRC)),
@@ -176,7 +176,7 @@ Examples('Object type',
           }
           notice(MyType)
           |-SRC
-         Evaluates_with(EVAL_MEMBER_NAME_CONFLICT)),
+         Evaluates_with(PCORE_MEMBER_NAME_CONFLICT)),
     ),
   ),
 
@@ -346,8 +346,7 @@ Examples('Object type',
           }]
           notice(MyType)
           |-SRC
-         Evaluates_with(Issue(EVAL_TYPE_MISMATCH, detail => Contain('type_parameter MyType[a] expects a Type value, got Integer')))),
-
+         Evaluates_with(PCORE_TYPE_MISMATCH)),
       Example('the type parameter value is present',
         Given(@(SRC)),
           type MyType = Object[{
@@ -355,7 +354,7 @@ Examples('Object type',
           }]
           notice(MyType)
           |-SRC
-        Evaluates_with(Issue(EVAL_TYPE_MISMATCH, detail => Contain(`unrecognized key 'value'`)))),
+        Evaluates_with(PCORE_TYPE_MISMATCH)),
 
       Example('no parameter is given',
         Given(@(SRC)),
@@ -365,7 +364,7 @@ Examples('Object type',
           }]
           notice(MyType[default])
           |-SRC
-        Evaluates_with(EVAL_EMPTY_TYPE_PARAMETER_LIST)),
+        Evaluates_with(PCORE_EMPTY_TYPE_PARAMETER_LIST)),
     ),
   ),
 )

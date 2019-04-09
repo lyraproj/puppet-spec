@@ -55,7 +55,7 @@ func NewSpecEvaluator(c pdsl.EvaluationContext) pdsl.Evaluator {
 }
 
 func (s *specEval) specError(issueCode issue.Code, semantic parser.Expression, args issue.H) issue.Reported {
-	return issue.NewReported(issueCode, issue.SEVERITY_ERROR, args, semantic)
+	return issue.NewReported(issueCode, issue.SeverityError, args, semantic)
 }
 
 func CreateTests(c pdsl.EvaluationContext, expression parser.Expression) []Test {
@@ -117,7 +117,7 @@ func (s *specEval) evalBlockExpression(expr *parser.BlockExpression) px.Value {
 }
 
 func (s *specEval) evalQualifiedReference(qr *parser.QualifiedReference) px.Value {
-	if i, ok := issue.IssueForCode2(issue.Code(qr.Name())); ok {
+	if i, ok := issue.ForCode2(issue.Code(qr.Name())); ok {
 		return types.WrapRuntime(i)
 	}
 	if p, ok := pspecQRefs[qr.Name()]; ok {
@@ -137,7 +137,7 @@ func (s *specEval) evalCallNamedFunctionExpression(call *parser.CallNamedFunctio
 
 func hasError(issues []issue.Reported) bool {
 	for _, i := range issues {
-		if i.Severity() == issue.SEVERITY_ERROR {
+		if i.Severity() == issue.SeverityError {
 			return true
 		}
 	}
@@ -146,7 +146,7 @@ func hasError(issues []issue.Reported) bool {
 
 func failOnError(assertions Assertions, issues []issue.Reported) {
 	for _, i := range issues {
-		if i.Severity() == issue.SEVERITY_ERROR {
+		if i.Severity() == issue.SeverityError {
 			assertions.Fail(i.Error())
 			return
 		}

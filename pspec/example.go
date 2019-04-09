@@ -110,7 +110,7 @@ func (e *EvaluationResult) CreateTest(actual interface{}) Executable {
 	return func(context *TestContext, assertions Assertions) {
 		o := context.ParserOptions()
 		if epp {
-			o = append(o, parser.PARSER_EPP_MODE)
+			o = append(o, parser.EppMode)
 		}
 		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)
@@ -201,7 +201,7 @@ func (p *ParseResult) CreateTest(actual interface{}) Executable {
 	return func(context *TestContext, assertions Assertions) {
 		o := context.ParserOptions()
 		if epp {
-			o = append(o, parser.PARSER_EPP_MODE)
+			o = append(o, parser.EppMode)
 		}
 		actual, issues := parseAndValidate(path, context.resolveLazyValue(source).String(), false, o...)
 		failOnError(assertions, issues)

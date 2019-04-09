@@ -278,7 +278,7 @@ func (p *pnParser) error(message string) error {
 			pos++
 		}
 	}
-	return issue.NewReported(PnParseError, issue.SEVERITY_ERROR, issue.H{`detail`: message}, issue.NewLocation(loc.File(), line, pos))
+	return issue.NewReported(PnParseError, issue.SeverityError, issue.H{`detail`: message}, issue.NewLocation(loc.File(), line, pos))
 }
 
 func (p *pnParser) from(s int) string {

@@ -20,7 +20,7 @@ Examples('Init type',
   (abstract_types() - internal_types()).map |$t| {
      Example("can not be created on a ${t.name}",
        Given("String(Init[${t.name}])"),
-       Evaluates_with(Error(Issue(EVAL_CTOR_NOT_FOUND, type => $t.name))))
+       Evaluates_with(Error(Issue(PCORE_CTOR_NOT_FOUND, type => $t.name))))
   },
 
   Example('Init[Integer, 16] can create an instance from a String',
@@ -33,5 +33,5 @@ Examples('Init type',
 
   Example('Init[String,23] raises an error because no available dispatcher exists',
     Given(`Init[String,23](128)`),
-    Evaluates_with(Error(Issue(EVAL_ILLEGAL_ARGUMENTS)))),
+    Evaluates_with(Error(Issue(PCORE_ILLEGAL_ARGUMENTS)))),
 )

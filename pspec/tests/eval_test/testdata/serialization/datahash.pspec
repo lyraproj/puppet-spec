@@ -3,7 +3,7 @@ Examples('ToDataConverter',
     Example('converts SemVer to String with warning',
       Given(`to_data(SemVer('1.2.3'), message_prefix => 'x', rich_data => false)`),
       Evaluates_to('1.2.3'),
-      Evaluates_with(Warning(Issue(EVAL_SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, 'klass' => 'SemVer', 'value' => '1.2.3')))),
+      Evaluates_with(Warning(Issue(PCORE_SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, 'klass' => 'SemVer', 'value' => '1.2.3')))),
   ),
 
   Examples('with rich_data == true',

@@ -149,7 +149,7 @@ func (q *FormatValue) Get(tc *TestContext) px.Value {
 	if format, ok := tc.resolveLazyValue(q.format).(px.StringValue); ok {
 		return types.WrapString(types.PuppetSprintf(format.String(), tc.resolveLazyValues(types.WrapValues(q.arguments))...))
 	}
-	panic(px.Error(FormatNotString, issue.NO_ARGS))
+	panic(px.Error(FormatNotString, issue.NoArgs))
 }
 
 func (ls *LazyScope) Get(name px.Value) (value px.Value, found bool) {

@@ -17,7 +17,7 @@ Examples('plans',
     Given(@(SRC)),
       mod::myplan('hello')
       |-SRC
-    Evaluates_with(EVAL_UNKNOWN_FUNCTION)),
+    Evaluates_with(PCORE_UNKNOWN_FUNCTION)),
 
   Examples('when tasks is enabled',
     Given(Settings(`tasks` => true)),

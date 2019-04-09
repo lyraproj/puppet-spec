@@ -93,7 +93,7 @@ func (e *Expectation) MatchEntries(b *bytes.Buffer, log *px.ArrayLogger, allIssu
 func issuesForLevel(issues []issue.Reported, level px.LogLevel) []issue.Reported {
 	levelIssues := make([]issue.Reported, 0)
 	severity := level.Severity()
-	if severity != issue.SEVERITY_IGNORE {
+	if severity != issue.SeverityIgnore {
 		for _, i := range issues {
 			if severity == i.Severity() {
 				levelIssues = append(levelIssues, i)
@@ -365,7 +365,7 @@ func (e *EvaluatesWith) CreateTest(actual interface{}) Executable {
 	return func(tc *TestContext, assertions Assertions) {
 		o := tc.ParserOptions()
 		if epp {
-			o = append(o, parser.PARSER_EPP_MODE)
+			o = append(o, parser.EppMode)
 		}
 		actual, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
 		tc.DoWithContext(func(c pdsl.EvaluationContext) {
@@ -387,7 +387,7 @@ func (v *ValidatesWith) CreateTest(actual interface{}) Executable {
 	return func(tc *TestContext, assertions Assertions) {
 		o := tc.ParserOptions()
 		if epp {
-			o = append(o, parser.PARSER_EPP_MODE)
+			o = append(o, parser.EppMode)
 		}
 		_, issues := parseAndValidate(path, tc.resolveLazyValue(source).String(), false, o...)
 		validateExpectations(assertions, v.expectations, issues, px.NewArrayLogger())

@@ -86,7 +86,7 @@ Examples('Array',
           8, 900]`))),
   ),
   Example('errors when format is not recognized',
-    Given(`String([1,2],'%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Array', supported_formats => 'asp')))),
+    Given(`String([1,2],'%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Array', supported_formats => 'asp')))),
 )
 
 Examples('Binary',
@@ -137,13 +137,13 @@ Examples('Binary',
     Given(`String(Binary('++//'), '%u')`), Evaluates_to(`--__`)),
 
   Example('refuses to do %s on strings containing illegal unicode constructs',
-    Given(`String(Binary('apa=', '%b'), '%s')`), Evaluates_with(Error(Issue(EVAL_FAILURE, message => Contain(`binary data is not valid UTF-8`))))),
+    Given(`String(Binary('apa=', '%b'), '%s')`), Evaluates_with(Error(Issue(PCORE_FAILURE, message => Contain(`binary data is not valid UTF-8`))))),
 
   Example('%s formats as unquoted string with valid UTF-8 chars',
     Given(`String(Binary([0xee, 0x8c, 0x98]), '%s')`), Evaluates_to("\uE318")),
 
   Example('errors when format is not recognized',
-    Given(`String(Binary([1]),'%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Binary', supported_formats => 'bButTsp')))),
+    Given(`String(Binary([1]),'%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Binary', supported_formats => 'bButTsp')))),
 )
 
 Examples('Boolean',
@@ -211,7 +211,7 @@ Examples('Boolean',
   ),
 
   Example('errors when format is not recognized',
-    Given(`String(true,'%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Boolean', supported_formats => 'tTyYdxXobBeEfgGaAsp')))),
+    Given(`String(true,'%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Boolean', supported_formats => 'tTyYdxXobBeEfgGaAsp')))),
 )
 
 Examples('Default',
@@ -219,8 +219,8 @@ Examples('Default',
     {
       `%d` => `default`,
       `%D` => `Default`,
-      `%#d` => `'default'`,
-      `%#D` => `'Default'`,
+      `%#d` => `default`,
+      `%#D` => `Default`,
       `%s` => `default`,
       `%p` => `default`,
     }.map |$fmt, $result| {
@@ -282,7 +282,7 @@ Examples('Float',
   },
 
   Example('errors when format is not recognized',
-    Given(`String(18.0,'%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Float', supported_formats => 'dxXobBeEfgGaAsp')))),
+    Given(`String(18.0,'%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Float', supported_formats => 'dxXobBeEfgGaAsp')))),
 )
 
 Examples('Hash',
@@ -357,7 +357,7 @@ Examples('Hash',
   ),
 
   Example('errors when format is not recognized',
-    Given(`String({ 1 => 2 },'%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Hash', supported_formats => 'hasp')))),
+    Given(`String({ 1 => 2 },'%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Hash', supported_formats => 'hasp')))),
 )
 
 Examples('Integer',
@@ -410,7 +410,7 @@ Examples('Integer',
     Given(`String(0x1f603, '%#c')`), Evaluates_to("'\u{1f603}'")),
 
   Example('errors when format is not recognized',
-    Given(`String(18,'%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Integer', supported_formats => 'dxXobBeEfgGaAspc')))),
+    Given(`String(18,'%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Integer', supported_formats => 'dxXobBeEfgGaAspc')))),
 )
 
 Examples('String',
@@ -521,7 +521,7 @@ Examples('String',
   ),
 
   Example('errors when format is not recognized',
-    Given(`String('wat', '%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'String', supported_formats => 'cCudspt')))),
+    Given(`String('wat', '%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'String', supported_formats => 'cCudspt')))),
 )
 
 Examples('Type',
@@ -738,5 +738,5 @@ Examples('Type',
   ),
 
   Example('errors when format is not recognized',
-    Given(`String(Integer, '%k')`), Evaluates_with(Error(Issue(EVAL_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Type', supported_formats => 'sp')))),
+    Given(`String(Integer, '%k')`), Evaluates_with(Error(Issue(PCORE_UNSUPPORTED_STRING_FORMAT, format => 'k', type => 'Type', supported_formats => 'sp')))),
 )

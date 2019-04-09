@@ -81,15 +81,15 @@ func (tc *TestContext) ParserOptions() []parser.Option {
 			switch k.String() {
 			case `tasks`:
 				if b, ok := v.(px.Boolean); ok && b.Bool() {
-					o = append(o, parser.PARSER_TASKS_ENABLED)
+					o = append(o, parser.TasksEnabled)
 				}
 			case `hex_escapes`:
 				if b, ok := v.(px.Boolean); ok && b.Bool() {
-					o = append(o, parser.PARSER_HANDLE_HEX_ESCAPES)
+					o = append(o, parser.HandleHexEscapes)
 				}
 			case `backtick_strings`:
 				if b, ok := v.(px.Boolean); ok && b.Bool() {
-					o = append(o, parser.PARSER_HANDLE_BACKTICK_STRINGS)
+					o = append(o, parser.HandleBacktickStrings)
 				}
 			}
 		})
@@ -202,7 +202,7 @@ func parseAndValidate(name, source string, singleExpression bool, o ...parser.Op
 		}
 		issues = []issue.Reported{i}
 	} else {
-		issues = validator.ValidatePuppet(expr, validator.STRICT_ERROR).Issues()
+		issues = validator.ValidatePuppet(expr, validator.StrictError).Issues()
 	}
 	return expr, issues
 }

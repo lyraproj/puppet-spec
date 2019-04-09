@@ -28,7 +28,7 @@ Examples('+',
 
     Example('array with uneven number of elements',
       Given(`{a => 10, b => 20} + [b, 30, c]`),
-      Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENTS))),
+      Evaluates_with(Error(PCORE_ILLEGAL_ARGUMENTS))),
 
     Example('array with array pairs',
       Given(`{a => 10, b => 20} + [[b, 30], [c, 40]]`),
@@ -36,7 +36,7 @@ Examples('+',
 
     Example('array with array that is not pair',
       Given(`{a => 10, b => 20} + [[b, 30, 34]]`),
-      Evaluates_with(Error(EVAL_ILLEGAL_ARGUMENTS))),
+      Evaluates_with(Error(PCORE_ILLEGAL_ARGUMENTS))),
 
     Example('other element',
       Given(`{a => 10, b => 20} + 4`),
